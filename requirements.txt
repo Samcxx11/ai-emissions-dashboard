@@ -1,0 +1,16 @@
+# Dashboard
+streamlit>=1.28.0
+plotly>=5.18.0
+pandas>=2.0.0
+numpy>=1.24.0
+statsmodels>=0.14.0
+
+# Benchmarking pipeline
+transformers>=4.36.0
+torch>=2.0.0
+codecarbon>=2.3.0
+bitsandbytes>=0.41.0
+accelerate>=0.25.0
+sentencepiece>=0.1.99
+protobuf>=3.20.0
+tqdm>=4.65.0
