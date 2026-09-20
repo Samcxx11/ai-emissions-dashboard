@@ -81,9 +81,12 @@ home_days = annual_energy_kwh / KWH_PER_HOME_PER_DAY
 
 st.markdown(f"### {selected_model} @ {queries_per_day:,} queries/day")
 met1, met2, met3 = st.columns(3)
-met1.metric("Annual Energy", f"{annual_energy_kwh:,.1f} kWh")
-met2.metric("Annual CO₂", f"{annual_co2_kg:,.1f} kg")
-met3.metric("Daily Energy", f"{daily_energy_kwh:,.2f} kWh")
+with met1:
+    st.markdown(metric_card(f"{annual_energy_kwh:,.1f}", "kWh", "Annual Energy", "red"), unsafe_allow_html=True)
+with met2:
+    st.markdown(metric_card(f"{annual_co2_kg:,.1f}", "kg", "Annual CO₂", "red"), unsafe_allow_html=True)
+with met3:
+    st.markdown(metric_card(f"{daily_energy_kwh:,.2f}", "kWh", "Daily Energy", "red"), unsafe_allow_html=True)
 
 st.markdown(divider(), unsafe_allow_html=True)
 st.markdown(chapter(3, "WHAT DOES THAT LOOK LIKE?"), unsafe_allow_html=True)
