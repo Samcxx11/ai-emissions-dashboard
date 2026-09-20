@@ -57,7 +57,8 @@ with c4:
 st.markdown(divider(), unsafe_allow_html=True)
 
 # ── Scenario Configuration ────────────────────────────────────────────────────
-st.markdown(chapter(2, "SCALING CALCULATOR", "Adjust the slider to see the annual impact of scaling."), unsafe_allow_html=True)
+st.markdown(chapter(2, "SCALING CALCULATOR"), unsafe_allow_html=True)
+st.markdown("Adjust the slider to see the annual impact of scaling.")
 
 col_select, col_slider = st.columns([1, 2])
 with col_select:
@@ -100,7 +101,8 @@ with eq4:
 st.markdown(divider(), unsafe_allow_html=True)
 
 # ── Cross-model scaling comparison ───────────────────────────────────────────
-st.markdown(chapter(4, "ANNUAL IMPACT: ALL MODELS COMPARED", f"What if each model served {queries_per_day:,} queries/day for a year?"), unsafe_allow_html=True)
+st.markdown(chapter(4, "ANNUAL IMPACT: ALL MODELS COMPARED"), unsafe_allow_html=True)
+st.markdown(f"What if each model served {queries_per_day:,} queries/day for a year?")
 
 comparison_rows = []
 for model in MODEL_ORDER:
@@ -135,7 +137,8 @@ st.markdown(finding(f"Switching from the largest to the smallest model would sav
 st.markdown(divider(), unsafe_allow_html=True)
 
 # ── Recommendations ───────────────────────────────────────────────────────────
-st.markdown(chapter(5, "ACTIONABLE RECOMMENDATIONS", "Practical steps to minimize your AI footprint."), unsafe_allow_html=True)
+st.markdown(chapter(5, "ACTIONABLE RECOMMENDATIONS"), unsafe_allow_html=True)
+st.markdown("Practical steps to minimize your AI footprint.")
 
 st.markdown(
     """
