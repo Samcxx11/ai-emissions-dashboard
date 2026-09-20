@@ -9,7 +9,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 
-from utils.constants import MODEL_COLORS, QUANTIZATION_COLORS, PALETTE, MODEL_ORDER, QUANT_ORDER, BATCH_SIZE_COLORS, BATCH_SIZE_ORDER, INPUT_LENGTH_COLORS, INPUT_LENGTH_ORDER
+from utils.constants import MODEL_COLORS, QUANTIZATION_COLORS, PALETTE, MODEL_ORDER, QUANT_ORDER, BATCH_SIZE_COLORS, BATCH_SIZE_ORDER, INPUT_LENGTH_COLORS, INPUT_LENGTH_ORDER, ARCHITECTURE_COLORS, ARCHITECTURE_ORDER, JEPA_MODEL_COLORS
 
 
 def _apply_layout(fig: go.Figure, title: str, xaxis: str = "", yaxis: str = "") -> go.Figure:
@@ -330,3 +330,37 @@ def bar_energy_per_token(df: pd.DataFrame) -> go.Figure:
                  text_auto=".5f")
     fig.update_traces(textposition="outside")
     return _apply_layout(fig, "Energy per Output Token", "Model", "Energy per Token (Wh)")
+
+
+# ── JEPA Charts ───────────────────────────────────────────────────────────────
+
+def bar_jepa_energy_comparison(df: pd.DataFrame) -> go.Figure:
+    """Bar chart: avg energy (Joules) per model — JEPA vs Generative."""
+    summary = df.groupby("model")["energy_j"].mean().reset_index()
+    summary = summary.sort_values("energy_j", ascending=False)
+    fig = px.bar(summary, x="model", y="energy_j",
+                 color="model", color_discrete_map=JEPA_MODEL_COLORS,
+                 text_auto=".0f")
+    fig.update_traces(textposition="outside")
+    return _apply_layout(fig, "Energy per Inference: JEPA vs Generative", "Model", "Energy (Joules)")
+
+
+def line_jepa_scaling(df: pd.DataFrame) -> go.Figure:
+    """Line chart: how energy scales with model size for both architectures."""
+    summary = df.groupby(["parameters_b", "architecture"])["energy_j"].mean().reset_index()
+    fig = px.line(summary, x="parameters_b", y="energy_j",
+                  color="architecture", color_discrete_map=ARCHITECTURE_COLORS,
+                  markers=True,
+                  category_orders={"architecture": ARCHITECTURE_ORDER})
+    fig.update_traces(line=dict(width=3), marker=dict(size=10))
+    return _apply_layout(fig, "Energy Scaling: JEPA vs Generative (as model grows)", "Parameters (Billions)", "Energy (Joules)")
+
+
+def bar_jepa_co2_comparison(df: pd.DataFrame) -> go.Figure:
+    """Bar chart: CO2 by architecture type."""
+    summary = df.groupby("architecture_type")["co2_grams"].mean().reset_index()
+    fig = px.bar(summary, x="architecture_type", y="co2_grams",
+                 color="architecture_type", color_discrete_map=ARCHITECTURE_COLORS,
+                 text_auto=".4f")
+    fig.update_traces(textposition="outside")
+    return _apply_layout(fig, "Avg CO₂ Emissions: Predictive vs Generative", "Architecture", "CO₂ (grams)")

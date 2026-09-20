@@ -40,6 +40,21 @@ INPUT_LENGTH_COLORS = {
 }
 INPUT_LENGTH_ORDER = ["Short", "Medium", "Long"]
 
+# JEPA vs Generative architecture colors
+ARCHITECTURE_COLORS = {
+    "Generative": "#e74c3c",            # red — high energy
+    "Predictive (JEPA)": "#2ecc71",     # green — energy efficient
+}
+ARCHITECTURE_ORDER = ["Generative", "Predictive (JEPA)"]
+
+# JEPA model colors
+JEPA_MODEL_COLORS = {
+    "ViT-MAE (Generative)": "#e74c3c",
+    "Stable Diffusion (Generative)": "#c0392b",
+    "I-JEPA (Predictive)": "#2ecc71",
+    "V-JEPA (Predictive)": "#27ae60",
+}
+
 # ---------------------------------------------------------------------------
 # CO₂ conversion factors
 # ---------------------------------------------------------------------------
