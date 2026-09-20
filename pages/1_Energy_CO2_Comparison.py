@@ -68,7 +68,7 @@ for i, model in enumerate(selected_models):
         metric_card(
             value=f"{avg_energy_wh:.3f}", 
             unit="Wh", 
-            desc=f"{model} • {avg_co2:.3f} g CO₂"
+            description=f"{model} • {avg_co2:.3f} g CO₂"
         )
 
 # ── Energy chart ──────────────────────────────────────────────────────────────
