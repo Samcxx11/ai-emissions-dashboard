@@ -376,9 +376,10 @@ def apply_editorial_layout(fig):
     return fig
 
 
-def chapter(number, title):
+def chapter(number, title, description=""):
     """Return HTML for a chapter marker."""
-    return f'<div class="chapter-marker">{number:02d} — {title}</div>'
+    desc_html = f'<p class="chapter-desc" style="font-size:0.95rem; color:#666; margin-top:-0.5rem; margin-bottom:1.5rem;">{description}</p>' if description else ""
+    return f'<div class="chapter-marker">{number:02d} — {title}</div>{desc_html}'
 
 
 def divider():
