@@ -1,8 +1,5 @@
 """
 Page 7 — JEPA vs Generative AI: The Future of Energy-Efficient AI
-
-Compares energy consumption of Joint Embedding Predictive Architecture (JEPA)
-models against traditional Generative models for vision tasks.
 """
 
 import os
@@ -12,9 +9,68 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import streamlit as st
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 
-from utils.charts import bar_jepa_energy_comparison, line_jepa_scaling, bar_jepa_co2_comparison
-from utils.constants import ARCHITECTURE_COLORS, JEPA_MODEL_COLORS
+# ── Inline constants (avoid Streamlit caching issues) ─────────────────────────
+ARCHITECTURE_COLORS = {
+    "Generative": "#e74c3c",
+    "Predictive (JEPA)": "#2ecc71",
+}
+ARCHITECTURE_ORDER = ["Generative", "Predictive (JEPA)"]
+
+JEPA_MODEL_COLORS = {
+    "ViT-MAE (Generative)": "#e74c3c",
+    "Stable Diffusion (Generative)": "#c0392b",
+    "I-JEPA (Predictive)": "#2ecc71",
+    "V-JEPA (Predictive)": "#27ae60",
+}
+
+
+# ── Inline chart functions ────────────────────────────────────────────────────
+def _apply_layout(fig, title, xaxis="", yaxis=""):
+    fig.update_layout(
+        title=dict(text=title, font_size=18),
+        xaxis_title=xaxis,
+        yaxis_title=yaxis,
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(size=13),
+        showlegend=True,
+        margin=dict(t=60, b=40),
+    )
+    return fig
+
+
+def bar_jepa_energy_comparison(df):
+    summary = df.groupby("model")["energy_j"].mean().reset_index()
+    summary = summary.sort_values("energy_j", ascending=False)
+    fig = px.bar(summary, x="model", y="energy_j",
+                 color="model", color_discrete_map=JEPA_MODEL_COLORS,
+                 text_auto=".0f")
+    fig.update_traces(textposition="outside")
+    return _apply_layout(fig, "Energy per Inference: JEPA vs Generative", "Model", "Energy (Joules)")
+
+
+def line_jepa_scaling(df):
+    summary = df.groupby(["parameters_b", "architecture"])["energy_j"].mean().reset_index()
+    fig = px.line(summary, x="parameters_b", y="energy_j",
+                  color="architecture", color_discrete_map=ARCHITECTURE_COLORS,
+                  markers=True,
+                  category_orders={"architecture": ARCHITECTURE_ORDER})
+    fig.update_traces(line=dict(width=3), marker=dict(size=10))
+    return _apply_layout(fig, "Energy Scaling: JEPA vs Generative (as model grows)", "Parameters (Billions)", "Energy (Joules)")
+
+
+def bar_jepa_co2_comparison(df):
+    summary = df.groupby("architecture_type")["co2_grams"].mean().reset_index()
+    fig = px.bar(summary, x="architecture_type", y="co2_grams",
+                 color="architecture_type", color_discrete_map=ARCHITECTURE_COLORS,
+                 text_auto=".4f")
+    fig.update_traces(textposition="outside")
+    return _apply_layout(fig, "Avg CO₂ Emissions: Predictive vs Generative", "Architecture", "CO₂ (grams)")
+
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(page_title="JEPA vs Generative", page_icon="🧠", layout="wide")
