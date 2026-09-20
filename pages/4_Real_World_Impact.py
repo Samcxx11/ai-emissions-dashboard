@@ -90,13 +90,13 @@ st.markdown(chapter(3, "WHAT DOES THAT LOOK LIKE?"), unsafe_allow_html=True)
 
 eq1, eq2, eq3, eq4 = st.columns(4)
 with eq1:
-    st.markdown(metric_card(f"{car_miles:,.0f}", "miles", "Driven by a car"), unsafe_allow_html=True)
+    st.markdown(metric_card(f"{car_miles:,.0f}", "miles", "Driven by a car", "red"), unsafe_allow_html=True)
 with eq2:
-    st.markdown(metric_card(f"{smartphone_charges:,.0f}", "charges", "Smartphone charges"), unsafe_allow_html=True)
+    st.markdown(metric_card(f"{smartphone_charges:,.0f}", "charges", "Smartphone charges", "red"), unsafe_allow_html=True)
 with eq3:
-    st.markdown(metric_card(f"{trees_needed:,.1f}", "trees", "Trees needed to offset (1 yr)"), unsafe_allow_html=True)
+    st.markdown(metric_card(f"{trees_needed:,.1f}", "trees", "Trees needed to offset (1 yr)", "red"), unsafe_allow_html=True)
 with eq4:
-    st.markdown(metric_card(f"{home_days:,.1f}", "days", "Powering a US home"), unsafe_allow_html=True)
+    st.markdown(metric_card(f"{home_days:,.1f}", "days", "Powering a US home", "red"), unsafe_allow_html=True)
 
 st.markdown(divider(), unsafe_allow_html=True)
 

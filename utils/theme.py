@@ -364,8 +364,8 @@ PLOTLY_LIGHT_TEMPLATE = dict(
     plot_bgcolor="rgba(247,245,240,0.5)",
     font=dict(family="Inter, sans-serif", size=13, color="#444444"),
     title=dict(font=dict(family="Fraunces, Georgia, serif", size=20, color="#111111")),
-    xaxis=dict(gridcolor="rgba(17,17,17,0.08)", linecolor="rgba(17,17,17,0.15)", tickfont=dict(size=11)),
-    yaxis=dict(gridcolor="rgba(17,17,17,0.08)", linecolor="rgba(17,17,17,0.15)", tickfont=dict(size=11)),
+    xaxis=dict(gridcolor="rgba(17,17,17,0.08)", linecolor="rgba(17,17,17,0.15)", tickfont=dict(size=12, color="#111111"), title_font=dict(color="#111111")),
+    yaxis=dict(gridcolor="rgba(17,17,17,0.08)", linecolor="rgba(17,17,17,0.15)", tickfont=dict(size=12, color="#111111"), title_font=dict(color="#111111")),
     colorway=["#111111", "#057A55", "#B91C1C", "#3498db", "#f39c12", "#9b59b6"],
 )
 
