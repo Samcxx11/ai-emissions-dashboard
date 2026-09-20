@@ -2,15 +2,17 @@
 Page 7 — JEPA vs Generative AI: The Future of Energy-Efficient AI
 """
 
-import os
-import sys
-
+import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from utils.theme import EDITORIAL_CSS, apply_editorial_layout, chapter, divider, finding, quote, metric_card, big_number
+
+st.set_page_config(page_title="JEPA vs Generative", page_icon="🧠", layout="wide")
+
+st.markdown(EDITORIAL_CSS, unsafe_allow_html=True)
 
 # ── Inline constants (avoid Streamlit caching issues) ─────────────────────────
 ARCHITECTURE_COLORS = {
@@ -28,29 +30,17 @@ JEPA_MODEL_COLORS = {
 
 
 # ── Inline chart functions ────────────────────────────────────────────────────
-def _apply_layout(fig, title, xaxis="", yaxis=""):
-    fig.update_layout(
-        title=dict(text=title, font_size=18),
-        xaxis_title=xaxis,
-        yaxis_title=yaxis,
-        template="plotly_dark",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(size=13),
-        showlegend=True,
-        margin=dict(t=60, b=40),
-    )
-    return fig
-
-
 def bar_jepa_energy_comparison(df):
     summary = df.groupby("model")["energy_j"].mean().reset_index()
     summary = summary.sort_values("energy_j", ascending=False)
     fig = px.bar(summary, x="model", y="energy_j",
                  color="model", color_discrete_map=JEPA_MODEL_COLORS,
-                 text_auto=".0f")
+                 text_auto=".0f",
+                 title="Energy per Inference: JEPA vs Generative")
     fig.update_traces(textposition="outside")
-    return _apply_layout(fig, "Energy per Inference: JEPA vs Generative", "Model", "Energy (Joules)")
+    fig.update_layout(xaxis_title="Model", yaxis_title="Energy (Joules)")
+    apply_editorial_layout(fig)
+    return fig
 
 
 def line_jepa_scaling(df):
@@ -58,49 +48,25 @@ def line_jepa_scaling(df):
     fig = px.line(summary, x="parameters_b", y="energy_j",
                   color="architecture", color_discrete_map=ARCHITECTURE_COLORS,
                   markers=True,
-                  category_orders={"architecture": ARCHITECTURE_ORDER})
+                  category_orders={"architecture": ARCHITECTURE_ORDER},
+                  title="Energy Scaling: JEPA vs Generative (as model grows)")
     fig.update_traces(line=dict(width=3), marker=dict(size=10))
-    return _apply_layout(fig, "Energy Scaling: JEPA vs Generative (as model grows)", "Parameters (Billions)", "Energy (Joules)")
+    fig.update_layout(xaxis_title="Parameters (Billions)", yaxis_title="Energy (Joules)")
+    apply_editorial_layout(fig)
+    return fig
 
 
 def bar_jepa_co2_comparison(df):
     summary = df.groupby("architecture_type")["co2_grams"].mean().reset_index()
     fig = px.bar(summary, x="architecture_type", y="co2_grams",
                  color="architecture_type", color_discrete_map=ARCHITECTURE_COLORS,
-                 text_auto=".4f")
+                 text_auto=".4f",
+                 title="Avg CO₂ Emissions: Predictive vs Generative")
     fig.update_traces(textposition="outside")
-    return _apply_layout(fig, "Avg CO₂ Emissions: Predictive vs Generative", "Architecture", "CO₂ (grams)")
+    fig.update_layout(xaxis_title="Architecture", yaxis_title="CO₂ (grams)")
+    apply_editorial_layout(fig)
+    return fig
 
-
-# ── Page config ───────────────────────────────────────────────────────────────
-st.set_page_config(page_title="JEPA vs Generative", page_icon="🧠", layout="wide")
-
-st.markdown(
-    """
-    <style>
-    .section-header { font-size:1.3rem; font-weight:700; margin-top:1.5rem; }
-    .insight-box {
-        background: linear-gradient(135deg, rgba(46,204,113,0.15), rgba(52,152,219,0.10));
-        border-left: 4px solid #2ecc71;
-        border-radius: 8px;
-        padding: 1rem 1.2rem;
-        margin: 1rem 0;
-    }
-    .metric-card {
-        background: rgba(255,255,255,0.05);
-        border-radius: 10px;
-        padding: 1.2rem;
-        text-align: center;
-        border: 1px solid rgba(255,255,255,0.1);
-    }
-    .metric-value { font-size: 2rem; font-weight: 800; }
-    .metric-label { font-size: 0.85rem; opacity: 0.7; }
-    .green { color: #2ecc71; }
-    .red { color: #e74c3c; }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
 
 # ── Load data ─────────────────────────────────────────────────────────────────
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
@@ -156,14 +122,12 @@ with st.expander("📖 What is JEPA? (Click to learn)", expanded=False):
         you don't need to **paint a photorealistic picture** of what's behind it. 
         You just need to **conceptually know** "there's probably a chair and a table." 
         That's what JEPA does — it thinks in concepts, not pixels.
-        
-        > **Source:** Assran et al., "Self-Supervised Learning from Images with a 
-        > Joint-Embedding Predictive Architecture" (Meta AI, CVPR 2023)
         """
     )
+    quote("Self-Supervised Learning from Images with a Joint-Embedding Predictive Architecture", "Assran et al., Meta AI, CVPR 2023")
 
 # ── Key Metrics ───────────────────────────────────────────────────────────────
-st.markdown('<p class="section-header">📊 Key Findings</p>', unsafe_allow_html=True)
+chapter(1, "Key Findings")
 
 gen_avg = df_comp[df_comp["architecture_type"] == "Generative"]["energy_j"].mean()
 jepa_avg = df_comp[df_comp["architecture_type"] == "Predictive (JEPA)"]["energy_j"].mean()
@@ -179,39 +143,20 @@ mem_savings = ((gen_mem - jepa_mem) / gen_mem) * 100
 
 c1, c2, c3, c4 = st.columns(4)
 with c1:
-    st.markdown(
-        f'<div class="metric-card">'
-        f'<div class="metric-value green">{savings_pct:.0f}%</div>'
-        f'<div class="metric-label">Less Energy (JEPA vs Generative)</div>'
-        f'</div>', unsafe_allow_html=True
-    )
+    metric_card(f"{savings_pct:.0f}", "%", "Less Energy (JEPA vs Generative)", "green")
 with c2:
-    st.markdown(
-        f'<div class="metric-card">'
-        f'<div class="metric-value green">{co2_savings:.0f}%</div>'
-        f'<div class="metric-label">Less CO₂ Emissions</div>'
-        f'</div>', unsafe_allow_html=True
-    )
+    metric_card(f"{co2_savings:.0f}", "%", "Less CO₂ Emissions", "green")
 with c3:
-    st.markdown(
-        f'<div class="metric-card">'
-        f'<div class="metric-value green">{mem_savings:.0f}%</div>'
-        f'<div class="metric-label">Less GPU Memory</div>'
-        f'</div>', unsafe_allow_html=True
-    )
+    metric_card(f"{mem_savings:.0f}", "%", "Less GPU Memory", "green")
 with c4:
     gen_lat = df_comp[df_comp["architecture_type"] == "Generative"]["duration_s"].mean()
     jepa_lat = df_comp[df_comp["architecture_type"] == "Predictive (JEPA)"]["duration_s"].mean()
     speed_up = gen_lat / jepa_lat
-    st.markdown(
-        f'<div class="metric-card">'
-        f'<div class="metric-value green">{speed_up:.1f}x</div>'
-        f'<div class="metric-label">Faster Inference</div>'
-        f'</div>', unsafe_allow_html=True
-    )
+    metric_card(f"{speed_up:.1f}", "x", "Faster Inference", "green")
 
 # ── Energy Comparison Charts ─────────────────────────────────────────────────
-st.markdown('<p class="section-header">⚡ Energy Comparison</p>', unsafe_allow_html=True)
+divider()
+chapter(2, "Energy Comparison")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -222,20 +167,11 @@ with col2:
     st.plotly_chart(fig_co2, use_container_width=True)
 
 # ── Insight Box ───────────────────────────────────────────────────────────────
-st.markdown(
-    f"""
-    <div class="insight-box">
-        <strong>💡 Key Insight:</strong> JEPA models use <strong>{savings_pct:.0f}% less energy</strong> 
-        than Generative models for the same vision tasks. This is because JEPA predicts 
-        <em>abstract embeddings</em> (~768 numbers) instead of reconstructing 
-        <em>full images</em> (~50,000 pixel values). Less math = less GPU power = less CO₂.
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+finding(f"JEPA models use **{savings_pct:.0f}% less energy** than Generative models for the same vision tasks. This is because JEPA predicts *abstract embeddings* (~768 numbers) instead of reconstructing *full images* (~50,000 pixel values). Less math = less GPU power = less CO₂.", "Key Insight")
 
 # ── Scaling Chart ─────────────────────────────────────────────────────────────
-st.markdown('<p class="section-header">📈 Scaling Efficiency</p>', unsafe_allow_html=True)
+divider()
+chapter(3, "Scaling Efficiency")
 st.markdown(
     "As models get bigger, **Generative models' energy grows quadratically** "
     "(like a rocket 🚀), while **JEPA's energy grows almost linearly** (like a bicycle 🚲). "
@@ -245,21 +181,14 @@ st.markdown(
 fig_scale = line_jepa_scaling(df_scale)
 st.plotly_chart(fig_scale, use_container_width=True)
 
-st.markdown(
-    """
-    <div class="insight-box">
-        <strong>🔮 Why This Matters for the Future:</strong> As AI models keep getting bigger 
-        (GPT-4 has 1.7 Trillion parameters!), the energy gap between Generative and JEPA 
-        architectures will keep widening. At 5B parameters, JEPA already uses <strong>~5x less 
-        energy</strong> than Generative. At 100B+ parameters, this difference could be 
-        <strong>50-100x</strong> — making JEPA essential for sustainable AI.
-    </div>
-    """,
-    unsafe_allow_html=True,
+finding(
+    "As AI models keep getting bigger (GPT-4 has 1.7 Trillion parameters!), the energy gap between Generative and JEPA architectures will keep widening. At 5B parameters, JEPA already uses **~5x less energy** than Generative. At 100B+ parameters, this difference could be **50-100x** — making JEPA essential for sustainable AI.",
+    "Why This Matters for the Future"
 )
 
 # ── Detailed Table ────────────────────────────────────────────────────────────
-st.markdown('<p class="section-header">📋 Model Comparison Table</p>', unsafe_allow_html=True)
+divider()
+chapter(4, "Model Comparison Table")
 
 summary_table = df_comp.groupby(["model", "architecture_type"]).agg(
     Params_B=("parameters_b", "first"),
@@ -281,11 +210,10 @@ summary_table = df_comp.groupby(["model", "architecture_type"]).agg(
 st.dataframe(summary_table, use_container_width=True, hide_index=True)
 
 # ── Takeaway ──────────────────────────────────────────────────────────────────
-st.markdown("---")
+divider()
+chapter(5, "Takeaway")
 st.markdown(
     """
-    ### 🌱 Takeaway
-    
     JEPA represents a **paradigm shift** in AI architecture design:
     
     - **For Developers:** If your task is *understanding* (classification, detection, search) 
@@ -299,8 +227,6 @@ st.markdown(
     - **For Research:** JEPA shows that making AI more *human-like* (thinking in concepts, 
       not pixels) also makes it more *energy-efficient*. Intelligence and sustainability 
       can go hand-in-hand.
-    
-    > *"The key challenge for AI is not to generate but to understand."*  
-    > — **Yann LeCun**, Meta AI
     """
 )
+quote("The key challenge for AI is not to generate but to understand.", "Yann LeCun, Meta AI")

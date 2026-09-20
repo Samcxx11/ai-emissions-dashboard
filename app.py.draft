@@ -1,0 +1,192 @@
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+import streamlit as st
+import pandas as pd
+from utils.theme import EDITORIAL_CSS, apply_editorial_layout, chapter, divider, finding, quote, metric_card, big_number
+
+st.set_page_config(
+    page_title="AI Emissions Dashboard",
+    page_icon="🌍",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+st.markdown(EDITORIAL_CSS, unsafe_allow_html=True)
+
+# ── Load data ─────────────────────────────────────────────────────────────────
+@st.cache_data
+def load_data():
+    data_dir = os.path.join(os.path.dirname(__file__), "data")
+    inference = pd.read_csv(os.path.join(data_dir, "inference_results.csv"))
+    summary = pd.read_csv(os.path.join(data_dir, "model_summary.csv"))
+    quant = pd.read_csv(os.path.join(data_dir, "quantization_comparison.csv"))
+    return inference, summary, quant
+
+inference_df, summary_df, quant_df = load_data()
+
+# ── Sidebar ───────────────────────────────────────────────────────────────────
+with st.sidebar:
+    st.image("https://img.icons8.com/fluency/96/earth-planet.png", width=60)
+    st.markdown("### 🌍 AI Emissions Dashboard")
+    st.markdown("---")
+    st.markdown(
+        "Measuring the environmental cost of AI inference — "
+        "one query at a time."
+    )
+    st.markdown("---")
+    st.markdown("**Models tested:**")
+    for _, row in summary_df.iterrows():
+        st.markdown(f"- {row['model']} ({row['parameters_b']}B)")
+    st.markdown("---")
+    st.markdown(
+        "**Methodology:**  \n"
+        "Following [Strubell et al. (2019)](https://arxiv.org/abs/1906.02243) "
+        "and [Henderson et al. (2020)](https://arxiv.org/abs/2002.05651)"
+    )
+
+# ── Hero Section ──────────────────────────────────────────────────────────────
+st.markdown(
+    """<div class="editorial-hero">
+        <h1>🌍 AI Inference Emissions Dashboard</h1>
+        <p class="hero-subtitle">We're measuring how much energy and CO₂ different AI language models use when answering the same questions, to find out whether bigger, more powerful AI models cost the planet more than smaller ones — and by how much.</p>
+    </div>""",
+    unsafe_allow_html=True,
+)
+
+# ── Key Metrics ───────────────────────────────────────────────────────────────
+st.markdown(chapter(1, "Experiment at a Glance"), unsafe_allow_html=True)
+
+total_queries = len(inference_df)
+total_energy_wh = inference_df["energy_kwh"].sum() * 1000
+total_co2_g = inference_df["co2_grams"].sum()
+models_tested = inference_df["model"].nunique()
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.markdown(metric_card(f"{models_tested}", "Models", "Models Tested", "green"), unsafe_allow_html=True)
+with col2:
+    st.markdown(metric_card(f"{total_queries}", "Queries", "Total Queries Run", ""), unsafe_allow_html=True)
+with col3:
+    st.markdown(metric_card(f"{total_energy_wh:.2f}", "Wh", "Total Energy Consumed", ""), unsafe_allow_html=True)
+with col4:
+    st.markdown(metric_card(f"{total_co2_g:.2f}", "g", "Total CO₂ Emitted", "red"), unsafe_allow_html=True)
+
+st.markdown(divider(), unsafe_allow_html=True)
+
+# ── Why This Matters ──────────────────────────────────────────────────────────
+st.markdown(chapter(2, "Why This Matters"), unsafe_allow_html=True)
+
+why_col1, why_col2, why_col3 = st.columns(3)
+
+with why_col1:
+    st.markdown(big_number(1), unsafe_allow_html=True)
+    st.markdown("### Scale")
+    st.markdown(
+        "AI is now used billions of times a day — search, chatbots, coding "
+        "assistants. Even a small per-query energy cost adds up massively at "
+        "that scale."
+    )
+
+with why_col2:
+    st.markdown(big_number(2), unsafe_allow_html=True)
+    st.markdown("### Invisibility")
+    st.markdown(
+        "Nobody sees the electricity bill behind an AI answer the way they "
+        "see a car's exhaust. This project makes an invisible cost visible."
+    )
+
+with why_col3:
+    st.markdown(big_number(3), unsafe_allow_html=True)
+    st.markdown("### Research Gap")
+    st.markdown(
+        "Even researchers who study this (Strubell et al., Henderson et al.) "
+        "note that most AI papers don't report energy costs at all — we're "
+        "doing something the field itself struggles with."
+    )
+
+st.markdown(divider(), unsafe_allow_html=True)
+
+# ── Key Finding Preview ──────────────────────────────────────────────────────
+st.markdown(chapter(3, "Key Finding"), unsafe_allow_html=True)
+
+smallest = summary_df.loc[summary_df["parameters_b"].idxmin()]
+largest = summary_df.loc[summary_df["parameters_b"].idxmax()]
+energy_ratio = largest["avg_energy_kwh"] / smallest["avg_energy_kwh"]
+pct_more = (energy_ratio - 1) * 100
+
+st.markdown(finding(
+    f"**{largest['model']}** ({largest['parameters_b']}B params) used roughly "
+    f"**{pct_more:.0f}% more energy** per response than **{smallest['model']}** "
+    f"({smallest['parameters_b']}B params), which suggests that choosing the "
+    f"right-sized AI model for a task — not just the most powerful one — is a "
+    f"real, measurable way to reduce carbon footprint."
+), unsafe_allow_html=True)
+
+st.markdown("")
+st.markdown(
+    "👈 **Use the sidebar pages** to explore detailed comparisons, "
+    "quantization impact, per-query analysis, and real-world impact calculations."
+)
+
+st.markdown(divider(), unsafe_allow_html=True)
+
+# ── Methodology ───────────────────────────────────────────────────────────────
+st.markdown(chapter(4, "Methodology"), unsafe_allow_html=True)
+
+st.markdown("""
+We followed this process to ensure a fair, reproducible comparison:
+
+1. **Picked 4 real open-source AI models** of different sizes (1.1B → 13B parameters)
+2. **Ran the same set of 20 questions** through each model, on the same hardware, so it's a fair comparison
+3. **Used CodeCarbon** (used by real researchers, including the BLOOM carbon footprint study by Luccioni et al.) to measure energy per response
+4. **Converted energy into CO₂** using India's electricity grid carbon intensity (0.708 kg CO₂/kWh)
+5. **Compared results normalized per response**, so bigger models aren't unfairly penalized just for existing
+6. **Tested quantization** (FP16 → INT8 → INT4) on Llama-2-7B (Real) to measure precision vs. efficiency trade-offs
+""")
+
+st.markdown(quote(
+    "We followed the measurement methodology from Strubell et al. (ACL 2019) "
+    "and the reporting standard from Henderson et al. (JMLR 2020), and validated "
+    "our tool choice against how Luccioni et al. measured BLOOM's carbon footprint.",
+    "Methodology Note"
+), unsafe_allow_html=True)
+
+st.markdown(divider(), unsafe_allow_html=True)
+
+# ── Research Papers ───────────────────────────────────────────────────────────
+st.markdown(chapter(5, "Research Foundation"), unsafe_allow_html=True)
+
+from utils.constants import PAPERS
+
+for paper in PAPERS:
+    st.markdown(
+        f"""<div class="compare-panel">
+            <h3><a href="{paper['url']}" target="_blank" style="color: inherit; text-decoration: underline; text-decoration-color: #057A55;">
+                {paper['title']}
+            </a></h3>
+            <div class="tl-desc"><strong>Authors:</strong> {paper['authors']}</div>
+            <div class="tl-desc" style="margin-top: 0.5rem;">📌 {paper['relevance']}</div>
+        </div>
+        <br>""",
+        unsafe_allow_html=True,
+    )
+
+st.markdown(divider(), unsafe_allow_html=True)
+
+# ── Limitations ───────────────────────────────────────────────────────────────
+st.markdown(chapter(6, "Acknowledged Limitations"), unsafe_allow_html=True)
+
+st.markdown("""
+- **Inference only**: We measured only inference (answering questions) emissions — not training emissions, which require resources beyond student access.
+- **Single hardware setup**: All tests ran on the same machine; results may differ on other hardware configurations.
+- **Sample data note**: This dashboard currently uses realistic simulated data. Replace the CSVs in `data/` with real CodeCarbon measurements for production use.
+- **Grid intensity**: We used India's average grid carbon intensity (0.708 kg CO₂/kWh). Actual emissions vary by region, time of day, and energy mix.
+- **Quantization on CPU**: Quantized models (INT4/INT8) work best on NVIDIA GPUs — CPU-only quantization is possible but slower and less standard.
+""")
+
+st.markdown("---")
+st.caption(
+    "Built as a research project on AI environmental impact · "
+    "Data methodology follows Strubell et al. (2019), Henderson et al. (2020), "
+    "and Luccioni et al. (2022)"
+)

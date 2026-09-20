@@ -5,40 +5,19 @@ Deep dive into individual query measurements: histograms, box plots,
 and the raw data table for full transparency.
 """
 
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import streamlit as st
 import pandas as pd
-import os
-import sys
+from utils.theme import EDITORIAL_CSS, apply_editorial_layout, chapter, divider, finding, quote, metric_card, big_number
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from utils.charts import histogram_energy, box_energy_by_model, box_co2_by_model
 from utils.constants import MODEL_COLORS, MODEL_ORDER
+import plotly.express as px
 
 st.set_page_config(page_title="Per-Query Analysis", page_icon="🔍", layout="wide")
 
-# ── Custom CSS ────────────────────────────────────────────────────────────────
-st.markdown("""
-<style>
-    .section-header {
-        font-size: 1.5rem; font-weight: 600; color: #ecf0f1;
-        margin: 2rem 0 1rem 0; padding-bottom: 0.5rem;
-        border-bottom: 2px solid #3498db;
-    }
-    .insight-box {
-        background: linear-gradient(135deg, #1a1d23 0%, #2c3e50 100%);
-        border-radius: 10px; padding: 1.2rem; margin: 1rem 0;
-        border-left: 4px solid #9b59b6;
-    }
-    .insight-box p { color: #bdc3c7; margin: 0; }
-    .stat-row {
-        background: #1a1d23; border-radius: 10px; padding: 1rem 1.5rem;
-        border: 1px solid #34495e; margin-bottom: 0.5rem;
-        display: flex; justify-content: space-between; align-items: center;
-    }
-    .stat-row .name { color: #ecf0f1; font-weight: 600; }
-    .stat-row .val { color: #3498db; font-size: 1.1rem; font-weight: 600; }
-</style>
-""", unsafe_allow_html=True)
+st.markdown(EDITORIAL_CSS, unsafe_allow_html=True)
 
 # ── Load data ─────────────────────────────────────────────────────────────────
 @st.cache_data
@@ -70,10 +49,7 @@ if filtered.empty:
     st.stop()
 
 # ── Descriptive statistics ────────────────────────────────────────────────────
-st.markdown(
-    '<p class="section-header">📊 Descriptive Statistics</p>',
-    unsafe_allow_html=True,
-)
+st.markdown(chapter(1, "Descriptive Statistics"), unsafe_allow_html=True)
 
 for model in selected_models:
     model_df = filtered[filtered["model"] == model]
@@ -82,22 +58,29 @@ for model in selected_models:
 
     with st.expander(f"**{model}** — {len(model_df)} queries", expanded=(len(selected_models) <= 2)):
         col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Mean Energy", f"{energy_wh.mean():.4f} Wh")
-        col2.metric("Std Dev", f"{energy_wh.std():.4f} Wh")
-        col3.metric("Min", f"{energy_wh.min():.4f} Wh")
-        col4.metric("Max", f"{energy_wh.max():.4f} Wh")
+        with col1:
+            st.markdown(metric_card(f"{energy_wh.mean():.4f}", "Wh", "Mean Energy", ""), unsafe_allow_html=True)
+        with col2:
+            st.markdown(metric_card(f"{energy_wh.std():.4f}", "Wh", "Std Dev", ""), unsafe_allow_html=True)
+        with col3:
+            st.markdown(metric_card(f"{energy_wh.min():.4f}", "Wh", "Min", ""), unsafe_allow_html=True)
+        with col4:
+            st.markdown(metric_card(f"{energy_wh.max():.4f}", "Wh", "Max", ""), unsafe_allow_html=True)
 
         col1b, col2b, col3b, col4b = st.columns(4)
-        col1b.metric("Mean CO₂", f"{model_df['co2_grams'].mean():.4f} g")
-        col2b.metric("Mean Latency", f"{model_df['duration_s'].mean():.2f} s")
-        col3b.metric("Mean Tokens", f"{model_df['tokens_generated'].mean():.0f}")
-        col4b.metric("Total Queries", f"{len(model_df)}")
+        with col1b:
+            st.markdown(metric_card(f"{model_df['co2_grams'].mean():.4f}", "g", "Mean CO₂", ""), unsafe_allow_html=True)
+        with col2b:
+            st.markdown(metric_card(f"{model_df['duration_s'].mean():.2f}", "s", "Mean Latency", ""), unsafe_allow_html=True)
+        with col3b:
+            st.markdown(metric_card(f"{model_df['tokens_generated'].mean():.0f}", "", "Mean Tokens", ""), unsafe_allow_html=True)
+        with col4b:
+            st.markdown(metric_card(f"{len(model_df)}", "", "Total Queries", ""), unsafe_allow_html=True)
+
+st.markdown(divider(), unsafe_allow_html=True)
 
 # ── Histogram ─────────────────────────────────────────────────────────────────
-st.markdown(
-    '<p class="section-header">📈 Energy Distribution</p>',
-    unsafe_allow_html=True,
-)
+st.markdown(chapter(2, "Energy Distribution"), unsafe_allow_html=True)
 
 st.markdown(
     "This histogram shows how energy consumption is distributed across all "
@@ -106,13 +89,13 @@ st.markdown(
 )
 
 fig_hist = histogram_energy(filtered)
+apply_editorial_layout(fig_hist)
 st.plotly_chart(fig_hist, use_container_width=True)
 
+st.markdown(divider(), unsafe_allow_html=True)
+
 # ── Box plots ─────────────────────────────────────────────────────────────────
-st.markdown(
-    '<p class="section-header">📦 Energy & CO₂ Spread</p>',
-    unsafe_allow_html=True,
-)
+st.markdown(chapter(3, "Energy & CO₂ Spread"), unsafe_allow_html=True)
 
 st.markdown(
     "Box plots show the median, quartiles, and outliers. "
@@ -124,31 +107,27 @@ col1, col2 = st.columns(2)
 
 with col1:
     fig_box_energy = box_energy_by_model(filtered)
+    apply_editorial_layout(fig_box_energy)
     st.plotly_chart(fig_box_energy, use_container_width=True)
 
 with col2:
     fig_box_co2 = box_co2_by_model(filtered)
+    apply_editorial_layout(fig_box_co2)
     st.plotly_chart(fig_box_co2, use_container_width=True)
 
 # ── Insight ───────────────────────────────────────────────────────────────────
 st.markdown(
-    """<div class="insight-box">
-        <p>🔬 <strong>Why variance matters:</strong> If a model's energy consumption
-        varies wildly between queries, it means some queries are much more
-        "expensive" than others — suggesting that not all prompts are created
-        equal. Longer, more complex prompts tend to generate more tokens and
-        consume more energy.</p>
-    </div>""",
+    finding(
+        "If a model's energy consumption varies wildly between queries, it means some queries are much more 'expensive' than others — suggesting that not all prompts are created equal. Longer, more complex prompts tend to generate more tokens and consume more energy.", 
+        "Why variance matters"
+    ),
     unsafe_allow_html=True,
 )
+
+st.markdown(divider(), unsafe_allow_html=True)
 
 # ── Tokens vs Energy correlation ──────────────────────────────────────────────
-st.markdown(
-    '<p class="section-header">🔗 Tokens Generated vs Energy</p>',
-    unsafe_allow_html=True,
-)
-
-import plotly.express as px
+st.markdown(chapter(4, "Tokens Generated vs Energy"), unsafe_allow_html=True)
 
 filtered_copy = filtered.copy()
 filtered_copy["energy_wh"] = filtered_copy["energy_kwh"] * 1000
@@ -163,21 +142,14 @@ fig_scatter = px.scatter(
     trendline="ols",
     labels={"tokens_generated": "Tokens Generated", "energy_wh": "Energy (Wh)"},
 )
-fig_scatter.update_layout(
-    title="Tokens Generated vs Energy Consumed",
-    paper_bgcolor="#0e1117",
-    plot_bgcolor="#1a1d23",
-    font=dict(color="#bdc3c7"),
-    xaxis=dict(gridcolor="#2c3e50"),
-    yaxis=dict(gridcolor="#2c3e50"),
-)
+fig_scatter.update_layout(title="Tokens Generated vs Energy Consumed")
+apply_editorial_layout(fig_scatter)
 st.plotly_chart(fig_scatter, use_container_width=True)
 
+st.markdown(divider(), unsafe_allow_html=True)
+
 # ── Raw data table ────────────────────────────────────────────────────────────
-st.markdown(
-    '<p class="section-header">📋 Raw Data (CSV)</p>',
-    unsafe_allow_html=True,
-)
+st.markdown(chapter(5, "Raw Data (CSV)"), unsafe_allow_html=True)
 
 st.markdown(
     "Full transparency: here's every measurement. This is the actual data "
@@ -222,9 +194,11 @@ st.download_button(
     mime="text/csv",
 )
 
-st.markdown("---")
+st.markdown(divider(), unsafe_allow_html=True)
 st.markdown(
-    "**Why show raw data?** Henderson et al. (JMLR 2020) emphasize that "
-    "reproducibility requires sharing actual measurements, not just aggregates. "
-    "Raw data plus process = credibility."
+    quote(
+        "Reproducibility requires sharing actual measurements, not just aggregates. Raw data plus process = credibility.", 
+        "Henderson et al. (JMLR 2020)"
+    ),
+    unsafe_allow_html=True
 )

@@ -5,12 +5,12 @@ Shows how quantizing Llama-2-7B (Real) from FP16 → INT8 → INT4 affects energ
 consumption, CO₂ emissions, GPU memory, and response quality.
 """
 
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import streamlit as st
 import pandas as pd
-import os
-import sys
+from utils.theme import EDITORIAL_CSS, apply_editorial_layout, chapter, divider, finding, quote, metric_card, big_number
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from utils.charts import (
     bar_quantization_energy,
     bar_quantization_co2,
@@ -20,43 +20,7 @@ from utils.constants import QUANTIZATION_COLORS, QUANT_ORDER
 
 st.set_page_config(page_title="Quantization Impact", page_icon="🔧", layout="wide")
 
-# ── Custom CSS ────────────────────────────────────────────────────────────────
-st.markdown("""
-<style>
-    .section-header {
-        font-size: 1.5rem; font-weight: 600; color: #ecf0f1;
-        margin: 2rem 0 1rem 0; padding-bottom: 0.5rem;
-        border-bottom: 2px solid #3498db;
-    }
-    .insight-box {
-        background: linear-gradient(135deg, #1a1d23 0%, #2c3e50 100%);
-        border-radius: 10px; padding: 1.2rem; margin: 1rem 0;
-        border-left: 4px solid #2ecc71;
-    }
-    .insight-box p { color: #bdc3c7; margin: 0; }
-    .warning-box {
-        background: linear-gradient(135deg, #1a1d23 0%, #4a2c2c 100%);
-        border-radius: 10px; padding: 1.2rem; margin: 1rem 0;
-        border-left: 4px solid #e74c3c;
-    }
-    .warning-box p { color: #bdc3c7; margin: 0; }
-    .quant-card {
-        background: #1a1d23; border-radius: 12px; padding: 1.5rem;
-        text-align: center; border: 1px solid #34495e;
-    }
-    .quant-card .value { font-size: 2rem; font-weight: 700; }
-    .quant-card .label { font-size: 0.9rem; color: #95a5a6; margin-top: 0.3rem; }
-    .quant-card .saving { font-size: 1.1rem; font-weight: 600; }
-    .green { color: #2ecc71; }
-    .red { color: #e74c3c; }
-    .explainer {
-        background: #1a1d23; border-radius: 10px; padding: 1.5rem;
-        border: 1px solid #34495e; margin-bottom: 1.5rem;
-    }
-    .explainer h4 { color: #ecf0f1; margin-top: 0; }
-    .explainer p { color: #bdc3c7; line-height: 1.6; }
-</style>
-""", unsafe_allow_html=True)
+st.markdown(EDITORIAL_CSS, unsafe_allow_html=True)
 
 # ── Load data ─────────────────────────────────────────────────────────────────
 @st.cache_data
@@ -67,7 +31,7 @@ def load_data():
 df = load_data()
 
 # ── Header ────────────────────────────────────────────────────────────────────
-st.markdown("# 🔧 Quantization Impact")
+st.markdown(chapter(1, "Quantization Impact"), unsafe_allow_html=True)
 st.markdown(
     "What happens when we compress an AI model to use less GPU memory? "
     "Here we test **Llama-2-7B (Real)** at three precision levels: FP16 (full), "
@@ -95,8 +59,10 @@ with st.expander("🧠 What is quantization? (click to expand)", expanded=False)
     making big models accessible on cheaper hardware.
     """)
 
+st.markdown(divider(), unsafe_allow_html=True)
+
 # ── GPU Memory Savings (The REAL benefit) ─────────────────────────────────────
-st.markdown('<p class="section-header">💾 GPU Memory Savings (The Real Benefit)</p>', unsafe_allow_html=True)
+st.markdown(chapter(2, "GPU Memory Savings (The Real Benefit)"), unsafe_allow_html=True)
 
 st.markdown(
     "Quantization's **primary advantage** is reducing GPU memory usage, "
@@ -111,32 +77,27 @@ col1, col2, col3 = st.columns(3)
 for col, precision in zip([col1, col2, col3], QUANT_ORDER):
     mem = memory_data[precision]
     mem_saving = ((fp16_mem - mem) / fp16_mem) * 100
-    color = QUANTIZATION_COLORS[precision]
-
+    
     with col:
         saving_text = f"↓ {mem_saving:.0f}% memory saved" if precision != "FP16" else "Baseline"
         saving_class = "green" if precision != "FP16" else ""
         st.markdown(
-            f"""<div class="quant-card">
-                <div class="value" style="color: {color};">{mem/1000:.1f} GB</div>
-                <div class="label">{precision} — GPU Memory</div>
-                <div class="saving {saving_class}">{saving_text}</div>
-            </div>""",
+            metric_card(f"{mem/1000:.1f}", "GB", f"{precision} — {saving_text}", saving_class),
             unsafe_allow_html=True,
         )
 
 st.markdown(
-    """<div class="insight-box">
-        <p>✅ <strong>Key Takeaway:</strong> INT4 quantization reduces GPU memory by ~66%.
-        This means a 7B model that normally needs a ₹5 lakh GPU (A100, 80GB) can now
-        run on a ₹50,000 GPU (RTX 3060, 8GB). Quantization is an <strong>accessibility tool</strong>,
-        not an energy-saving tool.</p>
-    </div>""",
+    finding(
+        "INT4 quantization reduces GPU memory by ~66%. This means a 7B model that normally needs a ₹5 lakh GPU (A100, 80GB) can now run on a ₹50,000 GPU (RTX 3060, 8GB). Quantization is an accessibility tool, not an energy-saving tool.",
+        "KEY TAKEAWAY",
+    ),
     unsafe_allow_html=True,
 )
 
+st.markdown(divider(), unsafe_allow_html=True)
+
 # ── Energy & CO₂ (The Counterintuitive Finding) ──────────────────────────────
-st.markdown('<p class="section-header">⚡ Energy & CO₂ Impact (Counterintuitive Finding!)</p>', unsafe_allow_html=True)
+st.markdown(chapter(3, "Energy & CO₂ Impact (Counterintuitive Finding!)"), unsafe_allow_html=True)
 
 avg_energy = df.groupby("precision")["energy_kwh"].mean()
 fp16_energy = avg_energy.get("FP16", 1)
@@ -146,8 +107,7 @@ col1, col2, col3 = st.columns(3)
 for col, precision in zip([col1, col2, col3], QUANT_ORDER):
     energy_wh = avg_energy.get(precision, 0) * 1000
     change = ((avg_energy.get(precision, 0) / fp16_energy) - 1) * 100
-    color = QUANTIZATION_COLORS[precision]
-
+    
     with col:
         if precision == "FP16":
             change_text = "Baseline"
@@ -156,11 +116,7 @@ for col, precision in zip([col1, col2, col3], QUANT_ORDER):
             change_text = f"↑ {change:.0f}% MORE energy"
             change_class = "red"
         st.markdown(
-            f"""<div class="quant-card">
-                <div class="value" style="color: {color};">{energy_wh:.3f} Wh</div>
-                <div class="label">{precision} — Avg Energy</div>
-                <div class="saving {change_class}">{change_text}</div>
-            </div>""",
+            metric_card(f"{energy_wh:.3f}", "Wh", f"{precision} — {change_text}", change_class),
             unsafe_allow_html=True,
         )
 
@@ -168,27 +124,29 @@ for col, precision in zip([col1, col2, col3], QUANT_ORDER):
 col1, col2 = st.columns(2)
 with col1:
     fig_energy = bar_quantization_energy(df)
+    fig_energy = apply_editorial_layout(fig_energy)
     st.plotly_chart(fig_energy, use_container_width=True)
 with col2:
     fig_co2 = bar_quantization_co2(df)
+    fig_co2 = apply_editorial_layout(fig_co2)
     st.plotly_chart(fig_co2, use_container_width=True)
 
 # Warning insight
 int4_increase = ((avg_energy.get("INT4", 0) / fp16_energy) - 1) * 100
 st.markdown(
-    f"""<div class="warning-box">
-        <p>⚠️ <strong>Counterintuitive Finding:</strong> Quantizing Llama-2-7B from FP16 to INT4
-        actually <strong>INCREASES</strong> energy consumption by ~{int4_increase:.0f}%!
-        This happens because the GPU must perform extra <strong>dequantization math</strong>
-        at every layer — converting compressed 4-bit weights back to 16-bit for computation.
-        This overhead increases both latency and total energy consumed.</p>
-    </div>""",
+    finding(
+        f"Quantizing Llama-2-7B from FP16 to INT4 actually INCREASES energy consumption by ~{int4_increase:.0f}%! This happens because the GPU must perform extra dequantization math at every layer — converting compressed 4-bit weights back to 16-bit for computation. This overhead increases both latency and total energy consumed.",
+        "COUNTERINTUITIVE FINDING",
+        warning=True,
+    ),
     unsafe_allow_html=True,
 )
 
+st.markdown(divider(), unsafe_allow_html=True)
+
 # ── Quality trade-off ─────────────────────────────────────────────────────────
 st.markdown(
-    '<p class="section-header">⚖️ The Trade-off: Quality vs Memory Savings</p>',
+    chapter(4, "The Trade-off: Quality vs Memory Savings"),
     unsafe_allow_html=True,
 )
 
@@ -198,6 +156,7 @@ st.markdown(
 )
 
 fig_quality = line_quality_vs_precision(df)
+fig_quality = apply_editorial_layout(fig_quality)
 st.plotly_chart(fig_quality, use_container_width=True)
 
 # Quality drop stats
@@ -208,22 +167,20 @@ int4_drop = fp16_quality - avg_quality.get("INT4", 0)
 
 col1, col2 = st.columns(2)
 with col1:
-    st.metric(
-        "INT8 quality drop vs FP16",
-        f"{int8_drop:.1f} points",
-        delta=f"-{int8_drop:.1f}",
-        delta_color="inverse",
+    st.markdown(
+        metric_card(f"-{int8_drop:.1f}", "points", "INT8 quality drop vs FP16", "red"),
+        unsafe_allow_html=True
     )
 with col2:
-    st.metric(
-        "INT4 quality drop vs FP16",
-        f"{int4_drop:.1f} points",
-        delta=f"-{int4_drop:.1f}",
-        delta_color="inverse",
+    st.markdown(
+        metric_card(f"-{int4_drop:.1f}", "points", "INT4 quality drop vs FP16", "red"),
+        unsafe_allow_html=True
     )
 
+st.markdown(divider(), unsafe_allow_html=True)
+
 # ── Detailed comparison table ─────────────────────────────────────────────────
-st.markdown('<p class="section-header">📋 Detailed Comparison</p>', unsafe_allow_html=True)
+st.markdown(chapter(5, "Detailed Comparison"), unsafe_allow_html=True)
 
 comparison = (
     df.groupby("precision")
@@ -262,12 +219,13 @@ comparison["Memory Saved vs FP16"] = comparison.apply(
 
 st.dataframe(comparison, use_container_width=True, hide_index=True)
 
+st.markdown(divider(), unsafe_allow_html=True)
+
 # ── Takeaway ──────────────────────────────────────────────────────────────────
-st.markdown("---")
+st.markdown(chapter(6, "Takeaway"), unsafe_allow_html=True)
+
 st.markdown(
     """
-    ### 🎯 Takeaway
-
     Our benchmark reveals a **counterintuitive truth** about quantization:
 
     | What People Think | What Our Data Shows |
@@ -276,10 +234,13 @@ st.markdown(
     | Quantization makes AI faster ❌ | Quantization **increases** latency due to dequantization overhead |
     | Quantization saves memory ✅ | **YES!** INT4 uses 66% less GPU memory |
     | Quantization reduces quality ✅ | Quality drops by ~9 points (FP16 → INT4) |
-
-    **Bottom Line:** Quantization is NOT an energy-saving technique — it's an **accessibility
-    technique**. It allows large AI models to run on cheaper, smaller GPUs that couldn't
-    otherwise fit the model in memory. Use FP16 when you have the hardware; use INT4 only
-    when you need to fit a model on limited hardware.
     """
+)
+
+st.markdown(
+    quote(
+        "Quantization is NOT an energy-saving technique — it's an accessibility technique. It allows large AI models to run on cheaper, smaller GPUs that couldn't otherwise fit the model in memory. Use FP16 when you have the hardware; use INT4 only when you need to fit a model on limited hardware.",
+        "Bottom Line"
+    ),
+    unsafe_allow_html=True
 )

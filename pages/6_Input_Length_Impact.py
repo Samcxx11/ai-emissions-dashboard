@@ -2,46 +2,17 @@
 Page 6 — Input Length Impact
 """
 
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import streamlit as st
 import pandas as pd
-import os
-import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from utils.theme import EDITORIAL_CSS, apply_editorial_layout, chapter, divider, finding, quote, metric_card, big_number
 from utils.charts import scatter_input_length_energy, bar_energy_per_input_token
 from utils.constants import INPUT_LENGTH_COLORS, INPUT_LENGTH_ORDER
 
 st.set_page_config(page_title="Input Length Impact", page_icon="📏", layout="wide")
 
-# ── Custom CSS ────────────────────────────────────────────────────────────────
-st.markdown("""
-<style>
-    .section-header {
-        font-size: 1.5rem; font-weight: 600; color: #ecf0f1;
-        margin: 2rem 0 1rem 0; padding-bottom: 0.5rem;
-        border-bottom: 2px solid #3498db;
-    }
-    .insight-box {
-        background: linear-gradient(135deg, #1a1d23 0%, #2c3e50 100%);
-        border-radius: 10px; padding: 1.2rem; margin: 1rem 0;
-        border-left: 4px solid #2ecc71;
-    }
-    .insight-box p { color: #bdc3c7; margin: 0; }
-    .quant-card {
-        background: #1a1d23; border-radius: 12px; padding: 1.5rem;
-        text-align: center; border: 1px solid #34495e;
-    }
-    .quant-card .value { font-size: 2rem; font-weight: 700; }
-    .quant-card .label { font-size: 0.9rem; color: #95a5a6; margin-top: 0.3rem; }
-    .quant-card .saving { font-size: 1.1rem; color: #2ecc71; font-weight: 600; }
-    .explainer {
-        background: #1a1d23; border-radius: 10px; padding: 1.5rem;
-        border: 1px solid #34495e; margin-bottom: 1.5rem;
-    }
-    .explainer h4 { color: #ecf0f1; margin-top: 0; }
-    .explainer p { color: #bdc3c7; line-height: 1.6; }
-</style>
-""", unsafe_allow_html=True)
+st.markdown(EDITORIAL_CSS, unsafe_allow_html=True)
 
 # ── Load data ─────────────────────────────────────────────────────────────────
 @st.cache_data
@@ -57,9 +28,10 @@ st.markdown(
     "How does the length of the prompt affect energy consumption? "
     "Here we analyze energy per token across different input lengths."
 )
+divider()
 
 # ── Key finding cards ───────────────────────────────────────────────
-st.markdown('<p class="section-header">📊 Energy by Input Length Category</p>', unsafe_allow_html=True)
+chapter(1, "Energy by Input Length Category")
 
 # Calculate energy per token
 if 'energy_wh' not in df.columns:
@@ -75,41 +47,39 @@ col1, col2, col3 = st.columns(3)
 for col, category in zip([col1, col2, col3], INPUT_LENGTH_ORDER):
     energy = avg_energy.get(category, 0)
     energy_token = avg_energy_token.get(category, 0)
-    color = INPUT_LENGTH_COLORS.get(category, "#ffffff")
-
+    
     with col:
-        st.markdown(
-            f"""<div class="quant-card">
-                <div class="value" style="color: {color};">{energy:.3f} Wh</div>
-                <div class="label">Total Avg Energy ({category})</div>
-                <div class="saving">{energy_token:.6f} Wh / token</div>
-            </div>""",
-            unsafe_allow_html=True,
+        metric_card(
+            f"{energy:.3f}", 
+            "Wh", 
+            f"Total Avg Energy ({category}) - {energy_token:.6f} Wh/token",
+            ""
         )
 
+divider()
+
 # ── Charts ───────────────────────────────────────────────────
-st.markdown('<p class="section-header">📉 Input Tokens vs Energy</p>', unsafe_allow_html=True)
+chapter(2, "Input Tokens vs Energy")
 
 col1, col2 = st.columns(2)
 
 with col1:
     fig_scatter = scatter_input_length_energy(df)
+    apply_editorial_layout(fig_scatter)
     st.plotly_chart(fig_scatter, use_container_width=True)
 
 with col2:
     fig_bar = bar_energy_per_input_token(df)
+    apply_editorial_layout(fig_bar)
     st.plotly_chart(fig_bar, use_container_width=True)
 
 # ── Insight ───────────────────────────────────────────────────────────────────
-st.markdown(
-    f"""<div class="insight-box">
-        <p>Energy per input token DECREASES by ~70% from short to medium inputs — longer prompts amortize the fixed costs of model loading and computation setup.</p>
-    </div>""",
-    unsafe_allow_html=True,
-)
+finding("Energy per input token DECREASES by ~70% from short to medium inputs — longer prompts amortize the fixed costs of model loading and computation setup.", "ENERGY EFFICIENCY")
+
+divider()
 
 # ── Summary table ─────────────────────────────────────────────────
-st.markdown('<p class="section-header">📋 Summary by Length Category</p>', unsafe_allow_html=True)
+chapter(3, "Summary by Length Category")
 
 comparison = (
     df.groupby("input_category")
@@ -133,7 +103,5 @@ comparison = (
 st.dataframe(comparison, use_container_width=True, hide_index=True)
 
 # ── Takeaway ──────────────────────────────────────────────────────────────────
-st.markdown("---")
-st.markdown(
-    "**Takeaway:** Longer inputs are more energy-efficient per token processed — this means batching context together rather than making multiple small queries can save energy."
-)
+divider()
+quote("Longer inputs are more energy-efficient per token processed — this means batching context together rather than making multiple small queries can save energy.", "Takeaway")

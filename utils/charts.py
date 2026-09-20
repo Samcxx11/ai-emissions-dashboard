@@ -9,42 +9,17 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 
+from utils.theme import apply_editorial_layout
 from utils.constants import MODEL_COLORS, QUANTIZATION_COLORS, PALETTE, MODEL_ORDER, QUANT_ORDER, BATCH_SIZE_COLORS, BATCH_SIZE_ORDER, INPUT_LENGTH_COLORS, INPUT_LENGTH_ORDER, ARCHITECTURE_COLORS, ARCHITECTURE_ORDER, JEPA_MODEL_COLORS
 
 
 def _apply_layout(fig: go.Figure, title: str, xaxis: str = "", yaxis: str = "") -> go.Figure:
-    """Apply consistent dark-themed layout to a figure."""
     fig.update_layout(
-        title=dict(text=title, font=dict(size=20, color="#ecf0f1")),
-        paper_bgcolor="#0e1117",
-        plot_bgcolor="#1a1d23",
-        font=dict(color="#bdc3c7", size=13),
-        xaxis=dict(
-            title=xaxis,
-            gridcolor="#2c3e50",
-            zerolinecolor="#2c3e50",
-        ),
-        yaxis=dict(
-            title=yaxis,
-            gridcolor="#2c3e50",
-            zerolinecolor="#2c3e50",
-        ),
-        legend=dict(
-            bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#ecf0f1"),
-        ),
-        margin=dict(l=60, r=30, t=60, b=60),
-        hoverlabel=dict(
-            bgcolor="#2c3e50",
-            font_size=13,
-            font_color="#ecf0f1",
-        ),
+        title=dict(text=title, font_size=18, font_family="Fraunces, serif"),
+        xaxis_title=xaxis,
+        yaxis_title=yaxis,
     )
-    return fig
-
-
-# ── Bar charts ────────────────────────────────────────────────────────────────
-
+    return apply_editorial_layout(fig)
 def bar_energy_by_model(df: pd.DataFrame) -> go.Figure:
     """Bar chart: average energy (Wh) per response, by model."""
     summary = (
