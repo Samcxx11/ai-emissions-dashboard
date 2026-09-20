@@ -398,7 +398,7 @@ def quote(text, attribution=""):
     return f'<div class="editorial-quote"><p>{text}</p>{attr}</div>'
 
 
-def metric_card(value, unit, description, color_class=""):
+def metric_card(value, unit, description="", color_class="", desc=""): description = description or desc
     """Return HTML for an editorial metric card."""
     return f"""
     <div class="metric-editorial">
