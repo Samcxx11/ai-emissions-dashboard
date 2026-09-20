@@ -12,7 +12,7 @@ st.markdown(EDITORIAL_CSS, unsafe_allow_html=True)
 st.markdown('<div class="editorial-hero">', unsafe_allow_html=True)
 st.markdown('<div class="status-badge"><div class="status-dot"></div>v1.0.0 — LIVE RESEARCH</div>', unsafe_allow_html=True)
 st.markdown('<h1><em>AI Inference</em> Emissions</h1>', unsafe_allow_html=True)
-st.markdown('<p class="hero-subtitle">Quantifying the invisible carbon footprint of large language models during production inference.</p>', unsafe_allow_html=True)
+st.markdown('<p class="hero-subtitle">Reducing the invisible carbon footprint of large language models using JEPA and other optimization techniques.</p>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown(chapter(1, "ABSTRACT"), unsafe_allow_html=True)
