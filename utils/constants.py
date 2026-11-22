@@ -6,54 +6,39 @@ throughout the dashboard for consistent styling and calculations.
 """
 
 # ---------------------------------------------------------------------------
-# Color palette — accessible, visually distinct
+# Color palette — Editorial Journal Palette
 # ---------------------------------------------------------------------------
 MODEL_COLORS = {
-    "TinyLlama-1.1B": "#2ecc71",   # green  — smallest, most efficient
-    "Phi-2-2.7B":     "#3498db",   # blue
-    "Llama-2-7B (Real)":     "#f39c12",   # orange
-    "Llama-2-13B":    "#e74c3c",   # red    — largest, most energy
+    "TinyLlama-1.1B": "#057A55",   # editorial forest green
+    "Phi-2-2.7B":     "#2563EB",   # technical cobalt blue
+    "Llama-2-7B (Real)": "#D97706", # editorial amber
+    "Llama-2-13B":    "#B91C1C",   # editorial crimson
 }
 
 QUANTIZATION_COLORS = {
-    "FP16":  "#e74c3c",   # red   — full precision
-    "INT8":  "#f39c12",   # amber — moderate compression
-    "INT4":  "#2ecc71",   # green — heavy compression
+    "FP16":  "#B91C1C",   # crimson — full precision
+    "INT8":  "#D97706",   # amber — 8-bit quantized
+    "INT4":  "#057A55",   # forest green — 4-bit compressed
 }
 
 # General chart palette
-PALETTE = ["#2ecc71", "#3498db", "#f39c12", "#e74c3c", "#9b59b6", "#1abc9c"]
+PALETTE = ["#057A55", "#2563EB", "#D97706", "#B91C1C", "#4B5563", "#111827"]
 
 # Batch size experiment colors
 BATCH_SIZE_COLORS = {
-    1: "#e74c3c",   # red — single query
-    2: "#f39c12",   # amber — small batch
-    4: "#2ecc71",   # green — larger batch
+    1: "#B91C1C",   # single query
+    2: "#D97706",   # small batch
+    4: "#057A55",   # optimized batch
 }
 BATCH_SIZE_ORDER = [1, 2, 4]
 
 # Input length categories
 INPUT_LENGTH_COLORS = {
-    "Short": "#2ecc71",   # green — least energy per token
-    "Medium": "#f39c12",  # amber
-    "Long": "#e74c3c",    # red — most total energy
+    "Short": "#057A55",   # forest green
+    "Medium": "#D97706",  # amber
+    "Long": "#B91C1C",    # crimson
 }
 INPUT_LENGTH_ORDER = ["Short", "Medium", "Long"]
-
-# JEPA vs Generative architecture colors
-ARCHITECTURE_COLORS = {
-    "Generative": "#e74c3c",            # red — high energy
-    "Predictive (JEPA)": "#2ecc71",     # green — energy efficient
-}
-ARCHITECTURE_ORDER = ["Generative", "Predictive (JEPA)"]
-
-# JEPA model colors
-JEPA_MODEL_COLORS = {
-    "ViT-MAE (Generative)": "#e74c3c",
-    "Stable Diffusion (Generative)": "#c0392b",
-    "I-JEPA (Predictive)": "#2ecc71",
-    "V-JEPA (Predictive)": "#27ae60",
-}
 
 # ---------------------------------------------------------------------------
 # CO₂ conversion factors
@@ -160,3 +145,119 @@ PAPERS = [
                      "validated our tool choice for inference measurement.",
     },
 ]
+
+# ---------------------------------------------------------------------------
+# JEPA research paper references
+# ---------------------------------------------------------------------------
+JEPA_PAPERS = [
+    {
+        "key": "Assran et al. (CVPR 2023)",
+        "title": "Self-Supervised Learning from Images with a Joint-Embedding "
+                 "Predictive Architecture (I-JEPA)",
+        "authors": "M. Assran, Q. Duval, I. Misra, P. Bojanowski, P. Vincent, "
+                   "M. Rabbat, Y. LeCun, N. Ballas",
+        "url": "https://openaccess.thecvf.com/content/CVPR2023/html/Assran_Self-Supervised_Learning_From_Images_With_a_Joint-Embedding_Predictive_Architecture_CVPR_2023_paper.html",
+        "relevance": "Introduces I-JEPA for image representation learning via latent "
+                     "prediction rather than pixel reconstruction. Reports training on "
+                     "16 A100 GPUs with ViT-H/14. Establishes technical feasibility of "
+                     "the JEPA learning objective for visual representations.",
+    },
+    {
+        "key": "Patterson et al. (2021)",
+        "title": "Carbon Emissions and Large Neural Network Training",
+        "authors": "D. Patterson, J. Gonzalez, Q. Le, C. Liang, L.-M. Munguia, "
+                   "D. Rothchild, D. So, M. Texier, J. Dean",
+        "url": "https://arxiv.org/abs/2104.10350",
+        "relevance": "Examines energy use and carbon emissions of training large "
+                     "neural networks. Establishes the importance of hardware, "
+                     "data-centre efficiency, and electricity sources in determining "
+                     "the carbon footprint of AI systems.",
+    },
+    {
+        "key": "LeCun (2022)",
+        "title": "A Path Towards Autonomous Machine Intelligence",
+        "authors": "Y. LeCun",
+        "url": "https://openreview.net/forum?id=BZ5a1r-kVsf",
+        "relevance": "Proposes the conceptual foundation for JEPA: hierarchical "
+                     "predictive world models that predict abstract representations "
+                     "rather than reconstructing all sensory details. Position paper "
+                     "providing theoretical motivation for the JEPA direction.",
+    },
+    {
+        "key": "Bardes et al. (2024)",
+        "title": "Revisiting Feature Prediction for Learning Visual "
+                 "Representations from Video (V-JEPA)",
+        "authors": "A. Bardes, Q. Garrido, J. Ponce, X. Chen, M. Rabbat, "
+                   "Y. LeCun, M. Assran, N. Ballas",
+        "url": "https://arxiv.org/abs/2404.08471",
+        "relevance": "Extends JEPA to video representation learning (V-JEPA). "
+                     "Video contains large amounts of temporally redundant "
+                     "information, making it the strongest candidate for a JEPA "
+                     "front-end that compresses multimodal input before an LLM.",
+    },
+]
+
+# ---------------------------------------------------------------------------
+# Inference Optimization Methods — research paper references
+# ---------------------------------------------------------------------------
+INFERENCE_OPT_PAPERS = [
+    {
+        "key": "vLLM — Automatic Prefix Caching",
+        "title": "Automatic Prefix Caching (vLLM Documentation)",
+        "authors": "vLLM Project Contributors",
+        "url": "https://docs.vllm.ai/en/stable/features/automatic_prefix_caching/",
+        "relevance": "Documents the runtime-level KV-cache reuse mechanism for matching "
+                     "token prefixes. Provides implementation details, block-hashing "
+                     "strategy, and cache-eviction behaviour.",
+    },
+    {
+        "key": "vLLM — Prefix Caching Design",
+        "title": "Automatic Prefix Caching Design (vLLM Documentation)",
+        "authors": "vLLM Project Contributors",
+        "url": "https://docs.vllm.ai/en/stable/design/prefix_caching/",
+        "relevance": "Describes the internal architecture of block-level prefix caching, "
+                     "hash-based block identification, and memory management trade-offs.",
+    },
+    {
+        "key": "IEEE CAL 2024 — SLO-Aware GPU DVFS",
+        "title": "SLO-Aware GPU DVFS for Energy-Efficient LLM Inference Serving",
+        "authors": "IEEE Computer Architecture Letters, Vol. 23, No. 2, pp. 150-153",
+        "url": "https://doi.org/10.1109/LCA.2024.3406038",
+        "relevance": "Reports 22.8% to 45.5% energy reduction under SLO constraints by "
+                     "dynamically adjusting GPU voltage and frequency during inference. "
+                     "Results are specific to their evaluated hardware and workloads.",
+    },
+    {
+        "key": "Jiang et al. (2023) — Mistral 7B",
+        "title": "Mistral 7B",
+        "authors": "A.Q. Jiang, A. Sablayrolles, A. Mensch, C. Bamford, D.S. Chaplot, "
+                   "D. de las Casas, et al.",
+        "url": "https://arxiv.org/abs/2310.06825",
+        "relevance": "Introduces Mistral 7B architecture using Sliding Window Attention "
+                     "(window size 4,096) alongside Grouped-Query Attention. Demonstrates "
+                     "that bounded local attention can maintain quality while reducing "
+                     "memory and computation for long sequences.",
+    },
+]
+
+# ---------------------------------------------------------------------------
+# Hardware specification for local experimental platform
+# ---------------------------------------------------------------------------
+LOCAL_HARDWARE = {
+    "chip": "Apple M4",
+    "cores_total": 10,
+    "cores_performance": 4,
+    "cores_efficiency": 6,
+    "gpu_cores": 10,
+    "memory_gb": 16,
+    "metal_support": "Metal 4",
+    "model": "MacBook Air (M4, 2025)",
+    "display": "2880 x 1864 Liquid Retina",
+    "neural_engine_tops": 38,
+    "memory_bandwidth_gbps": 120,
+    "gpu_type": "Integrated Apple M4 GPU (10-core)",
+    "notes": "Unified memory architecture — CPU, GPU, and Neural Engine share "
+             "the same 16 GB LPDDR5X memory pool. No discrete NVIDIA GPU available; "
+             "NVML power measurement is not applicable. Use powermetrics or "
+             "Apple Instruments for energy profiling.",
+}

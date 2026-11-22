@@ -1,35 +1,19 @@
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-*.pyo
-*.egg-info/
-dist/
-build/
-*.egg
+*$py.class
+*.pyc
 
-# Virtual environment
-venv/
-.venv/
-env/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS files
+# macOS metadata
 .DS_Store
 ._*
-Thumbs.db
+.Spotlight-V100
+.Trashes
 
-# CodeCarbon output
-data/codecarbon/
-emissions.csv
+# Virtual environments
+venv/
+env/
+.env
 
-# Streamlit
+# Streamlit config
 .streamlit/
-
-# Drafts
-*.draft

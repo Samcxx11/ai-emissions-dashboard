@@ -1,9 +1,8 @@
 """
-Page 4 — Real-World Impact
+Chapter 04 — Macro Scaling & Environmental Equivalencies
 
-Shows what these micro-measurements mean at scale (e.g., thousands or millions of
-queries per day) and translates them into understandable metrics like car miles
-or smartphone charges. Also provides actionable recommendations.
+Extrapolating empirical per-query telemetry to commercial production scales
+(1,000 to 10,000,000 daily queries) with EPA carbon equivalencies.
 """
 
 import streamlit as st
@@ -20,151 +19,257 @@ from utils.constants import (
     KWH_PER_SMARTPHONE_CHARGE,
     CO2_KG_PER_TREE_PER_YEAR,
     KWH_PER_HOME_PER_DAY,
+    GRID_CARBON_INTENSITY_KG_PER_KWH,
 )
-from utils.theme import EDITORIAL_CSS, apply_editorial_layout, chapter, divider, finding, quote, metric_card, big_number
+from utils.theme import EDITORIAL_CSS, chapter, divider, finding, formula_box
 
-st.set_page_config(page_title="Real-World Impact", page_icon="🌍", layout="wide")
+st.set_page_config(
+    page_title="Macro Scaling & Equivalencies",
+    layout="wide",
+)
+
+# ── Apply Editorial Theme ─────────────────────────────────────────────────────
 st.markdown(EDITORIAL_CSS, unsafe_allow_html=True)
 
-# ── Load data ─────────────────────────────────────────────────────────────────
+
+# ── Load Data ─────────────────────────────────────────────────────────────────
 @st.cache_data
 def load_data():
     data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
-    return pd.read_csv(os.path.join(data_dir, "inference_results.csv"))
+    return pd.read_csv(os.path.join(data_dir, "model_summary.csv"))
 
-df = load_data()
+
+summary_df = load_data()
+
 
 # ── Header ────────────────────────────────────────────────────────────────────
-st.markdown('<div class="editorial-hero">', unsafe_allow_html=True)
-st.markdown(big_number(4), unsafe_allow_html=True)
-st.markdown('<h1><em>Real-World</em> Impact</h1>', unsafe_allow_html=True)
-st.markdown('<p class="hero-subtitle">What do our measurements mean at real-world scale? This page translates per-query numbers into tangible impacts.</p>', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
-
-# ── Causal chain ──────────────────────────────────────────────────────────────
-st.markdown(chapter(1, "HOW THIS PROJECT LEADS TO REDUCTION"), unsafe_allow_html=True)
-
-c1, c2, c3, c4 = st.columns(4)
-with c1:
-    st.markdown(metric_card("1. Measure", "", "We track actual energy used per query on hardware"), unsafe_allow_html=True)
-with c2:
-    st.markdown(metric_card("2. Scale", "", "We project those costs to real-world usage volumes"), unsafe_allow_html=True)
-with c3:
-    st.markdown(metric_card("3. Expose", "", "We show the hidden environmental impact clearly"), unsafe_allow_html=True)
-with c4:
-    st.markdown(metric_card("4. Optimize", "", "Developers can choose smaller/efficient models"), unsafe_allow_html=True)
-
-st.markdown(divider(), unsafe_allow_html=True)
-
-# ── Scenario Configuration ────────────────────────────────────────────────────
-st.markdown(chapter(2, "SCALING CALCULATOR"), unsafe_allow_html=True)
-st.markdown("Adjust the slider to see the annual impact of scaling.")
-
-col_select, col_slider = st.columns([1, 2])
-with col_select:
-    selected_model = st.selectbox("Choose a model:", options=MODEL_ORDER, index=2)
-with col_slider:
-    queries_per_day = st.slider("Queries per day:", min_value=1_000, max_value=10_000_000, value=100_000, step=1_000, format="%d")
-
-model_data = df[df["model"] == selected_model]
-avg_energy_kwh = model_data["energy_kwh"].mean()
-avg_co2_g = model_data["co2_grams"].mean()
-
-daily_energy_kwh = avg_energy_kwh * queries_per_day
-annual_energy_kwh = daily_energy_kwh * 365
-annual_co2_kg = (avg_co2_g * queries_per_day * 365) / 1000
-
-car_miles = annual_co2_kg / CO2_KG_PER_CAR_MILE
-smartphone_charges = annual_energy_kwh / KWH_PER_SMARTPHONE_CHARGE
-trees_needed = annual_co2_kg / CO2_KG_PER_TREE_PER_YEAR
-home_days = annual_energy_kwh / KWH_PER_HOME_PER_DAY
-
-st.markdown(f"### {selected_model} @ {queries_per_day:,} queries/day")
-met1, met2, met3 = st.columns(3)
-with met1:
-    st.markdown(metric_card(f"{annual_energy_kwh:,.1f}", "kWh", "Annual Energy", "red"), unsafe_allow_html=True)
-with met2:
-    st.markdown(metric_card(f"{annual_co2_kg:,.1f}", "kg", "Annual CO₂", "red"), unsafe_allow_html=True)
-with met3:
-    st.markdown(metric_card(f"{daily_energy_kwh:,.2f}", "kWh", "Daily Energy", "red"), unsafe_allow_html=True)
-
-st.markdown(divider(), unsafe_allow_html=True)
-st.markdown(chapter(3, "WHAT DOES THAT LOOK LIKE?"), unsafe_allow_html=True)
-
-eq1, eq2, eq3, eq4 = st.columns(4)
-with eq1:
-    st.markdown(metric_card(f"{car_miles:,.0f}", "miles", "Driven by a car", "red"), unsafe_allow_html=True)
-with eq2:
-    st.markdown(metric_card(f"{smartphone_charges:,.0f}", "charges", "Smartphone charges", "red"), unsafe_allow_html=True)
-with eq3:
-    st.markdown(metric_card(f"{trees_needed:,.1f}", "trees", "Trees needed to offset (1 yr)", "red"), unsafe_allow_html=True)
-with eq4:
-    st.markdown(metric_card(f"{home_days:,.1f}", "days", "Powering a US home", "red"), unsafe_allow_html=True)
-
-st.markdown(divider(), unsafe_allow_html=True)
-
-# ── Cross-model scaling comparison ───────────────────────────────────────────
-st.markdown(chapter(4, "ANNUAL IMPACT: ALL MODELS COMPARED"), unsafe_allow_html=True)
-st.markdown(f"What if each model served {queries_per_day:,} queries/day for a year?")
-
-comparison_rows = []
-for model in MODEL_ORDER:
-    m_data = df[df["model"] == model]
-    m_energy = m_data["energy_kwh"].mean() * queries_per_day * 365
-    m_co2 = (m_data["co2_grams"].mean() * queries_per_day * 365) / 1000
-    comparison_rows.append({"Model": model, "Annual Energy (kWh)": m_energy, "Annual CO₂ (kg)": m_co2})
-
-comp_df = pd.DataFrame(comparison_rows)
-
-fig = go.Figure()
-fig.add_trace(go.Bar(
-    x=comp_df["Model"],
-    y=comp_df["Annual CO₂ (kg)"],
-    marker_color=[MODEL_COLORS.get(m, "#3498db") for m in comp_df["Model"]],
-    text=[f"{v:,.0f} kg" for v in comp_df["Annual CO₂ (kg)"]],
-    textposition="outside",
-))
-fig.update_layout(
-    title=dict(text=f"Annual CO₂ Emissions @ {queries_per_day:,} queries/day"),
-    xaxis_title="Model",
-    yaxis_title="CO₂ (kg/year)",
+st.markdown(
+    chapter(4, "MACRO SCALING & EQUIVALENCIES", "Annual carbon accounting and tangible EPA metrics"),
+    unsafe_allow_html=True,
 )
-st.plotly_chart(apply_editorial_layout(fig), use_container_width=True)
+st.markdown("<h1>Macro Scaling and Environmental Equivalencies</h1>", unsafe_allow_html=True)
+st.markdown(
+    "<p class='hero-subtitle'>"
+    "Translating micro-scale per-query watt-hours into annual macro-scale environmental impacts "
+    "across commercial API request volumes using United States EPA carbon equivalency benchmarks."
+    "</p>",
+    unsafe_allow_html=True,
+)
 
-smallest_co2 = comp_df["Annual CO₂ (kg)"].min()
-largest_co2 = comp_df["Annual CO₂ (kg)"].max()
-savings_kg = largest_co2 - smallest_co2
 
-st.markdown(finding(f"Switching from the largest to the smallest model would save **{savings_kg:,.0f} kg CO₂/year** at this query volume — equivalent to **{savings_kg / CO2_KG_PER_CAR_MILE:,.0f} fewer car miles driven**.", "POTENTIAL SAVINGS"), unsafe_allow_html=True)
+# ── Interactive Scaling Calculator ───────────────────────────────────────────
+st.markdown(
+    "<div class='chapter-marker'>DYNAMIC SCALE SIMULATOR</div>"
+    "<h3>Configure Commercial Deployment Volume</h3>",
+    unsafe_allow_html=True,
+)
 
+scale_col1, scale_col2 = st.columns([1, 2])
+
+with scale_col1:
+    daily_queries = st.select_slider(
+        "Daily Query Volume (Requests / Day):",
+        options=[
+            1_000,
+            5_000,
+            10_000,
+            50_000,
+            100_000,
+            500_000,
+            1_000_000,
+            5_000_000,
+            10_000_000,
+        ],
+        value=1_000_000,
+        format_func=lambda x: f"{x:,.0f} queries/day",
+    )
+    st.markdown(
+        f"<p style='font-family: var(--mono); font-size: 11px; color: var(--graphite);'>"
+        f"Annual cumulative volume: <strong>{daily_queries * 365:,.0f} queries/year</strong>."
+        "</p>",
+        unsafe_allow_html=True,
+    )
+
+with scale_col2:
+    st.markdown(
+        "<div class='compare-panel' style='padding: 1.2rem;'>"
+        "<div class='compare-tag modern'>EPA ACCOUNTING STANDARDS</div>"
+        "<p style='font-size: 0.88rem; line-height: 1.5; color: var(--graphite); margin: 0;'>"
+        "Calculations utilize US Environmental Protection Agency (EPA) factors: "
+        "Passenger Vehicle: 0.404 kg CO2/mile · Mature Tree Sequestration: 21.77 kg CO2/year · "
+        "Smartphone Full Charge: 0.012 kWh · Residential Power: 30.0 kWh/day."
+        "</p>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+
+# ── Annual Cumulative Calculations ───────────────────────────────────────────
 st.markdown(divider(), unsafe_allow_html=True)
-
-# ── Recommendations ───────────────────────────────────────────────────────────
-st.markdown(chapter(5, "ACTIONABLE RECOMMENDATIONS"), unsafe_allow_html=True)
-st.markdown("Practical steps to minimize your AI footprint.")
 
 st.markdown(
-    """
-    * **1. Right-Size Your Model:** If a 1B model performs almost as well as a 7B model for simple tasks, use the smaller one. This is the single biggest lever.
-    * **2. Avoid Overkill:** Many people use large general-purpose models for tasks a small specialized model could handle.
-    * **3. Quantize When Possible:** INT8 quantization saves ~35% energy with under 2% quality loss. INT4 saves ~58%.
-    * **4. Cache Repeated Queries:** Use semantic caching for FAQs — zero energy for a cached response.
-    * **5. Batch Requests:** Running multiple queries together is more energy-efficient per-query due to better GPU utilization.
-    * **6. Time-of-Use Awareness:** Running heavy AI workloads when the grid has more renewable energy reduces the carbon intensity per kWh.
-    * **7. Smart Model Routing:** Use a lightweight classifier to route simple queries to small models, complex ones to large models. 70–80% of queries hit the cheap model.
-    * **8. Speculative Decoding:** Use a small draft model to generate candidate tokens, then verify with the large model in parallel. 2–3× speedup, identical quality.
-    * **9. Optimized Inference Engines:** Replace vanilla inference with vLLM (PagedAttention), TensorRT-LLM, or llama.cpp. Same model, same quality, 30–60% less energy.
-    * **10. Limit Output Tokens:** Set tight `max_new_tokens` limits. Generating 2,000 tokens when 200 suffice wastes 10× decode energy.
-    * **11. Low-Carbon Regions:** The same query emits 90× less CO₂ in Norway (hydro) than India (coal). Pick cloud regions powered by renewables.
-    * **12. Optimize Prompt Length:** Shorter prompts use less prefill energy. Remove unnecessary context and verbose instructions.
-    """
+    "<div class='chapter-marker'>ANNUAL METRICS</div>"
+    f"<h3>Cumulative Impact at {daily_queries:,.0f} Daily Inquiries</h3>",
+    unsafe_allow_html=True,
 )
 
-st.markdown(finding("Want the full playbook? Visit the **♻️ Carbon Reduction Strategies** page in the sidebar for 22 detailed strategies with an interactive savings simulator.", "SEE ALSO"), unsafe_allow_html=True)
+annual_queries = daily_queries * 365
 
+annual_data = []
+for _, row in summary_df.iterrows():
+    ann_energy_kwh = row["avg_energy_kwh"] * annual_queries
+    ann_co2_kg = (row["avg_co2_grams"] * annual_queries) / 1000.0
+    miles = ann_co2_kg / CO2_KG_PER_CAR_MILE
+    trees = ann_co2_kg / CO2_KG_PER_TREE_PER_YEAR
+    charges = ann_energy_kwh / KWH_PER_SMARTPHONE_CHARGE
+    home_days = ann_energy_kwh / KWH_PER_HOME_PER_DAY
+
+    annual_data.append({
+        "model": row["model"],
+        "parameters_b": row["parameters_b"],
+        "annual_energy_kwh": ann_energy_kwh,
+        "annual_co2_kg": ann_co2_kg,
+        "miles": miles,
+        "trees": trees,
+        "charges": charges,
+        "home_days": home_days,
+    })
+
+ann_df = pd.DataFrame(annual_data)
+
+# Contrast smallest vs largest
+smallest_row = ann_df.loc[ann_df["parameters_b"].idxmin()]
+largest_row = ann_df.loc[ann_df["parameters_b"].idxmax()]
+avoidable_co2 = largest_row["annual_co2_kg"] - smallest_row["annual_co2_kg"]
+avoidable_miles = largest_row["miles"] - smallest_row["miles"]
+avoidable_trees = largest_row["trees"] - smallest_row["trees"]
+
+eq_c1, eq_c2, eq_c3, eq_c4 = st.columns(4)
+
+with eq_c1:
+    st.markdown(
+        f"""
+        <div class="metric-editorial">
+            <div class="metric-number red">{avoidable_co2/1000:.1f}</div>
+            <div class="metric-unit">Metric Tons CO2e</div>
+            <div class="metric-desc">Annual avoidable emissions between unoptimized 13B and right-sized 1.1B.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with eq_c2:
+    st.markdown(
+        f"""
+        <div class="metric-editorial">
+            <div class="metric-number">{avoidable_miles:,.0f}</div>
+            <div class="metric-unit">Passenger Car Miles</div>
+            <div class="metric-desc">Equivalent internal-combustion vehicle miles eliminated annually.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with eq_c3:
+    st.markdown(
+        f"""
+        <div class="metric-editorial">
+            <div class="metric-number green">{avoidable_trees:,.0f}</div>
+            <div class="metric-unit">Mature Trees Required</div>
+            <div class="metric-desc">Annual urban tree sequestration units needed to offset the 13B variance.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with eq_c4:
+    st.markdown(
+        f"""
+        <div class="metric-editorial">
+            <div class="metric-number">{largest_row['annual_energy_kwh']/1000:,.1f}</div>
+            <div class="metric-unit">Megawatt-Hours (MWh)</div>
+            <div class="metric-desc">Total annual electricity consumed by 13B serving this inquiry volume.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# ── Annual Comparison Visualizations ──────────────────────────────────────────
 st.markdown(divider(), unsafe_allow_html=True)
-st.markdown(chapter(6, "THE BOTTOM LINE"), unsafe_allow_html=True)
 
-st.markdown(quote("Developers should default to smaller models when the task doesn't need a large one — that's not a compromise, it's an optimization.", "Best Practice"), unsafe_allow_html=True)
+v1, v2 = st.columns(2)
 
-st.caption("Equivalency calculations based on EPA Greenhouse Gas Equivalencies Calculator · Grid intensity: India average (0.708 kg CO₂/kWh)")
+with v1:
+    fig_ann_co2 = go.Figure(go.Bar(
+        x=[m.replace(" (Real)", "") for m in ann_df["model"]],
+        y=ann_df["annual_co2_kg"] / 1000.0,
+        marker_color=[MODEL_COLORS.get(m, "#111111") for m in ann_df["model"]],
+        text=[f"{v:,.1f} t" for v in ann_df["annual_co2_kg"] / 1000.0],
+        textposition="outside",
+        textfont=dict(color="#000000", size=11, family="JetBrains Mono, monospace"),
+    ))
+    fig_ann_co2.update_layout(
+        title=dict(text="Annual Carbon Emissions (Metric Tons CO2e)", font=dict(family="Fraunces, Georgia, serif", size=18, color="#000000")),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(247,245,240,0.5)",
+        font=dict(family="Inter, sans-serif", color="#000000", size=12),
+        xaxis=dict(title=dict(text="Architecture", font=dict(color="#000000")), gridcolor="rgba(17,17,17,0.08)", tickfont=dict(color="#000000")),
+        yaxis=dict(title=dict(text="Metric Tons CO2e", font=dict(color="#000000")), gridcolor="rgba(17,17,17,0.08)", tickfont=dict(color="#000000")),
+        margin=dict(l=60, r=30, t=60, b=60),
+    )
+    st.plotly_chart(fig_ann_co2, use_container_width=True)
+
+with v2:
+    fig_trees = go.Figure(go.Bar(
+        x=[m.replace(" (Real)", "") for m in ann_df["model"]],
+        y=ann_df["trees"],
+        marker_color=[MODEL_COLORS.get(m, "#111111") for m in ann_df["model"]],
+        text=[f"{v:,.0f}" for v in ann_df["trees"]],
+        textposition="outside",
+        textfont=dict(color="#000000", size=11, family="JetBrains Mono, monospace"),
+    ))
+    fig_trees.update_layout(
+        title=dict(text="Tree Offset Requirements (Trees Growing for 1 Year)", font=dict(family="Fraunces, Georgia, serif", size=18, color="#000000")),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(247,245,240,0.5)",
+        font=dict(family="Inter, sans-serif", color="#000000", size=12),
+        xaxis=dict(title=dict(text="Architecture", font=dict(color="#000000")), gridcolor="rgba(17,17,17,0.08)", tickfont=dict(color="#000000")),
+        yaxis=dict(title=dict(text="Tree Count", font=dict(color="#000000")), gridcolor="rgba(17,17,17,0.08)", tickfont=dict(color="#000000")),
+        margin=dict(l=60, r=30, t=60, b=60),
+    )
+    st.plotly_chart(fig_trees, use_container_width=True)
+
+# ── Macro Scaling Mathematical Specification ──────────────────────────────────
+st.markdown(
+    formula_box(
+        "Annual Macro Extrapolation & EPA Equivalencies",
+        r"\text{Annual Carbon (kg)} = \frac{\bar{C} \;(\text{g})}{1000} \times Q_{\text{daily}} \times 365, \quad \text{Vehicle Miles} = \frac{\text{CO}_{2}\text{e (kg)}}{0.404}, \quad \text{Tree-Years} = \frac{\text{CO}_{2}\text{e (kg)}}{21.77}",
+        "Converts laboratory single-query telemetry into commercial annual footprints. "
+        "EPA equivalency constants: 0.404 kg CO2e per passenger vehicle mile; 21.77 kg CO2 sequestered per mature urban tree per year.",
+        tag="MACRO SCALING LAW",
+    ),
+    unsafe_allow_html=True,
+)
+
+
+# ── Summary Ledger ────────────────────────────────────────────────────────────
+st.markdown(divider(), unsafe_allow_html=True)
+
+st.markdown(
+    "<div class='chapter-marker'>AUDIT SUMMARY TABLE</div>"
+    "<h3>Annualized Footprint and Offsets Ledger</h3>",
+    unsafe_allow_html=True,
+)
+
+tab_df = pd.DataFrame({
+    "Architecture": [m.replace(" (Real)", "") for m in ann_df["model"]],
+    "Parameters": [f"{p}B" for p in ann_df["parameters_b"]],
+    "Annual Electricity": [f"{k:,.1f} kWh" for k in ann_df["annual_energy_kwh"]],
+    "Annual Carbon": [f"{c/1000:,.2f} Metric Tons" for c in ann_df["annual_co2_kg"]],
+    "Automobile Distance": [f"{m:,.0f} miles" for m in ann_df["miles"]],
+    "Tree Sequestration": [f"{t:,.0f} trees" for t in ann_df["trees"]],
+    "Household Power": [f"{h:,.0f} days" for h in ann_df["home_days"]],
+})
+
+st.dataframe(tab_df, use_container_width=True, hide_index=True)

@@ -1,204 +1,167 @@
 """
-Page 3 — Per-Query Analysis
+Chapter 03 — Statistical Variance & Query Distributions
 
-Deep dive into individual query measurements: histograms, box plots,
-and the raw data table for full transparency.
+Empirical inspection of individual prompt variance, box-whisker dispersions,
+and raw telemetry distributions across test sequences.
 """
 
-import os, sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import streamlit as st
 import pandas as pd
-from utils.theme import EDITORIAL_CSS, apply_editorial_layout, chapter, divider, finding, quote, metric_card, big_number
+import os
+import sys
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from utils.charts import histogram_energy, box_energy_by_model, box_co2_by_model
 from utils.constants import MODEL_COLORS, MODEL_ORDER
-import plotly.express as px
+from utils.theme import EDITORIAL_CSS, chapter, divider, finding
 
-st.set_page_config(page_title="Per-Query Analysis", page_icon="🔍", layout="wide")
+st.set_page_config(
+    page_title="Statistical Variance & Distributions",
+    layout="wide",
+)
 
+# ── Apply Editorial Theme ─────────────────────────────────────────────────────
 st.markdown(EDITORIAL_CSS, unsafe_allow_html=True)
 
-# ── Load data ─────────────────────────────────────────────────────────────────
+
+# ── Load Data ─────────────────────────────────────────────────────────────────
 @st.cache_data
 def load_data():
     data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
     return pd.read_csv(os.path.join(data_dir, "inference_results.csv"))
 
+
 df = load_data()
 
+
 # ── Header ────────────────────────────────────────────────────────────────────
-st.markdown("# 🔍 Per-Query Analysis")
 st.markdown(
-    "This page shows the raw measurement data — distributions, variance, "
-    "and the full CSV table. Showing raw data plus process equals credibility."
+    chapter(3, "DISTRIBUTIONAL ANALYSIS", "Statistical dispersion and individual query variance"),
+    unsafe_allow_html=True,
+)
+st.markdown("<h1>Statistical Variance and Distributions</h1>", unsafe_allow_html=True)
+st.markdown(
+    "<p class='hero-subtitle'>"
+    "A transparent inspection of raw measurement distributions across all 200 analytical inference queries, "
+    "evaluating standard deviations, outlier sensitivity, and interquartile spreads."
+    "</p>",
+    unsafe_allow_html=True,
 )
 
-# ── Filter ────────────────────────────────────────────────────────────────────
+
+# ── Model Filter ──────────────────────────────────────────────────────────────
 selected_models = st.multiselect(
-    "Filter models:",
+    "Active Architectures:",
     options=MODEL_ORDER,
     default=MODEL_ORDER,
-    key="per_query_filter",
 )
 
 filtered = df[df["model"].isin(selected_models)]
 
 if filtered.empty:
-    st.warning("Please select at least one model.")
+    st.warning("Please select at least one architecture.")
     st.stop()
 
-# ── Descriptive statistics ────────────────────────────────────────────────────
-st.markdown(chapter(1, "Descriptive Statistics"), unsafe_allow_html=True)
 
-for model in selected_models:
-    model_df = filtered[filtered["model"] == model]
-    energy_wh = model_df["energy_kwh"] * 1000
-    color = MODEL_COLORS.get(model, "#3498db")
-
-    with st.expander(f"**{model}** — {len(model_df)} queries", expanded=(len(selected_models) <= 2)):
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.markdown(metric_card(f"{energy_wh.mean():.4f}", "Wh", "Mean Energy", ""), unsafe_allow_html=True)
-        with col2:
-            st.markdown(metric_card(f"{energy_wh.std():.4f}", "Wh", "Std Dev", ""), unsafe_allow_html=True)
-        with col3:
-            st.markdown(metric_card(f"{energy_wh.min():.4f}", "Wh", "Min", ""), unsafe_allow_html=True)
-        with col4:
-            st.markdown(metric_card(f"{energy_wh.max():.4f}", "Wh", "Max", ""), unsafe_allow_html=True)
-
-        col1b, col2b, col3b, col4b = st.columns(4)
-        with col1b:
-            st.markdown(metric_card(f"{model_df['co2_grams'].mean():.4f}", "g", "Mean CO₂", ""), unsafe_allow_html=True)
-        with col2b:
-            st.markdown(metric_card(f"{model_df['duration_s'].mean():.2f}", "s", "Mean Latency", ""), unsafe_allow_html=True)
-        with col3b:
-            st.markdown(metric_card(f"{model_df['tokens_generated'].mean():.0f}", "", "Mean Tokens", ""), unsafe_allow_html=True)
-        with col4b:
-            st.markdown(metric_card(f"{len(model_df)}", "", "Total Queries", ""), unsafe_allow_html=True)
-
-st.markdown(divider(), unsafe_allow_html=True)
-
-# ── Histogram ─────────────────────────────────────────────────────────────────
-st.markdown(chapter(2, "Energy Distribution"), unsafe_allow_html=True)
-
+# ── Statistical Overview ─────────────────────────────────────────────────────
 st.markdown(
-    "This histogram shows how energy consumption is distributed across all "
-    "queries. Notice how the distributions for different models are well-separated — "
-    "confirming that model size has a consistent effect, not just an average one."
-)
-
-fig_hist = histogram_energy(filtered)
-apply_editorial_layout(fig_hist)
-st.plotly_chart(fig_hist, use_container_width=True)
-
-st.markdown(divider(), unsafe_allow_html=True)
-
-# ── Box plots ─────────────────────────────────────────────────────────────────
-st.markdown(chapter(3, "Energy & CO₂ Spread"), unsafe_allow_html=True)
-
-st.markdown(
-    "Box plots show the median, quartiles, and outliers. "
-    "Tight boxes = consistent measurements. Wide boxes or many outliers "
-    "= high variance (potentially noisy hardware or variable prompt difficulty)."
-)
-
-col1, col2 = st.columns(2)
-
-with col1:
-    fig_box_energy = box_energy_by_model(filtered)
-    apply_editorial_layout(fig_box_energy)
-    st.plotly_chart(fig_box_energy, use_container_width=True)
-
-with col2:
-    fig_box_co2 = box_co2_by_model(filtered)
-    apply_editorial_layout(fig_box_co2)
-    st.plotly_chart(fig_box_co2, use_container_width=True)
-
-# ── Insight ───────────────────────────────────────────────────────────────────
-st.markdown(
-    finding(
-        "If a model's energy consumption varies wildly between queries, it means some queries are much more 'expensive' than others — suggesting that not all prompts are created equal. Longer, more complex prompts tend to generate more tokens and consume more energy.", 
-        "Why variance matters"
-    ),
+    "<div class='chapter-marker'>SUMMARY STATISTICS</div>"
+    "<h3>Per-Architecture Dispersion Indices</h3>",
     unsafe_allow_html=True,
 )
 
-st.markdown(divider(), unsafe_allow_html=True)
-
-# ── Tokens vs Energy correlation ──────────────────────────────────────────────
-st.markdown(chapter(4, "Tokens Generated vs Energy"), unsafe_allow_html=True)
-
-filtered_copy = filtered.copy()
-filtered_copy["energy_wh"] = filtered_copy["energy_kwh"] * 1000
-
-fig_scatter = px.scatter(
-    filtered_copy,
-    x="tokens_generated",
-    y="energy_wh",
-    color="model",
-    color_discrete_map=MODEL_COLORS,
-    opacity=0.7,
-    trendline="ols",
-    labels={"tokens_generated": "Tokens Generated", "energy_wh": "Energy (Wh)"},
+summary_stats = (
+    filtered.groupby("model")
+    .agg(
+        mean_wh=("energy_kwh", lambda x: (x.mean() * 1000)),
+        std_wh=("energy_kwh", lambda x: (x.std() * 1000)),
+        min_wh=("energy_kwh", lambda x: (x.min() * 1000)),
+        max_wh=("energy_kwh", lambda x: (x.max() * 1000)),
+        mean_co2=("co2_grams", "mean"),
+    )
+    .reindex(selected_models)
+    .reset_index()
 )
-fig_scatter.update_layout(title="Tokens Generated vs Energy Consumed")
-apply_editorial_layout(fig_scatter)
-st.plotly_chart(fig_scatter, use_container_width=True)
 
+cols = st.columns(len(selected_models))
+for i, row in summary_stats.iterrows():
+    clean_name = row['model'].replace(" (Real)", "")
+    with cols[i]:
+        st.markdown(
+            f"""
+            <div class="metric-editorial">
+                <div style="font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--graphite); margin-bottom: 0.5rem;">
+                    {clean_name}
+                </div>
+                <div class="metric-number" style="font-size: 1.8rem;">
+                    {row['mean_wh']:.3f} <span style="font-size: 0.9rem; color: var(--graphite);">± {row['std_wh']:.3f}</span>
+                </div>
+                <div class="metric-unit">Range: {row['min_wh']:.3f} – {row['max_wh']:.3f} Wh</div>
+                <div class="metric-desc">Standard deviation reflects output sequence length variance under deterministic greedy decoding.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+# ── Distribution Chart ────────────────────────────────────────────────────────
 st.markdown(divider(), unsafe_allow_html=True)
-
-# ── Raw data table ────────────────────────────────────────────────────────────
-st.markdown(chapter(5, "Raw Data (CSV)"), unsafe_allow_html=True)
 
 st.markdown(
-    "Full transparency: here's every measurement. This is the actual data "
-    "behind every chart in this dashboard. You can sort by any column."
+    "<div class='chapter-marker'>HISTOGRAM PROFILE</div>"
+    "<h3>Cumulative Energy Distribution Across All Runs</h3>",
+    unsafe_allow_html=True,
 )
 
-display_df = filtered.copy()
-display_df["energy_wh"] = (display_df["energy_kwh"] * 1000).round(4)
+fig_hist = histogram_energy(filtered)
+st.plotly_chart(fig_hist, use_container_width=True)
 
-display_cols = ["query_id", "model", "parameters_b", "prompt", "tokens_generated",
-     "energy_wh", "co2_grams", "duration_s"]
-rename_map = {
-    "query_id": "Query #",
-    "model": "Model",
-    "parameters_b": "Params (B)",
+
+# ── Box & Whisker Charts ──────────────────────────────────────────────────────
+st.markdown(divider(), unsafe_allow_html=True)
+
+st.markdown(
+    "<div class='chapter-marker'>INTERQUARTILE RANGE</div>"
+    "<h3>Variance and Outlier Spread</h3>",
+    unsafe_allow_html=True,
+)
+
+b1, b2 = st.columns(2)
+
+with b1:
+    fig_box_e = box_energy_by_model(filtered)
+    st.plotly_chart(fig_box_e, use_container_width=True)
+
+with b2:
+    fig_box_c = box_co2_by_model(filtered)
+    st.plotly_chart(fig_box_c, use_container_width=True)
+
+
+# ── Raw Data Table ────────────────────────────────────────────────────────────
+st.markdown(divider(), unsafe_allow_html=True)
+
+st.markdown(
+    "<div class='chapter-marker'>AUDIT LEDGER</div>"
+    "<h3>Complete Raw Telemetry Dataset</h3>",
+    unsafe_allow_html=True,
+)
+
+display_df = filtered[[
+    "query_id", "model", "prompt", "tokens_generated", 
+    "energy_kwh", "duration_s", "co2_grams", "gpu_memory_mb"
+]].copy()
+
+display_df["energy_wh"] = display_df["energy_kwh"] * 1000
+display_df = display_df.drop(columns=["energy_kwh"])
+display_df = display_df.rename(columns={
+    "query_id": "ID",
+    "model": "Architecture",
     "prompt": "Prompt",
-    "tokens_generated": "Tokens",
-    "energy_wh": "Energy (Wh)",
-    "co2_grams": "CO₂ (g)",
+    "tokens_generated": "Output Tokens",
     "duration_s": "Latency (s)",
-}
+    "co2_grams": "CO2e (g)",
+    "gpu_memory_mb": "VRAM (MB)",
+    "energy_wh": "Energy (Wh)",
+})
 
-if "energy_per_token" in display_df.columns:
-    display_df["energy_per_token_uh"] = (display_df["energy_per_token"] * 1e6).round(2)
-    display_cols.append("energy_per_token_uh")
-    rename_map["energy_per_token_uh"] = "µWh/Token"
-
-if "gpu_memory_mb" in display_df.columns:
-    display_cols.append("gpu_memory_mb")
-    rename_map["gpu_memory_mb"] = "GPU Mem (MB)"
-
-display_df = display_df[display_cols].rename(columns=rename_map)
-
-st.dataframe(display_df, use_container_width=True, height=400, hide_index=True)
-
-# ── Download button ───────────────────────────────────────────────────────────
-csv = filtered.to_csv(index=False)
-st.download_button(
-    label="⬇️ Download filtered data as CSV",
-    data=csv,
-    file_name="inference_results_filtered.csv",
-    mime="text/csv",
-)
-
-st.markdown(divider(), unsafe_allow_html=True)
-st.markdown(
-    quote(
-        "Reproducibility requires sharing actual measurements, not just aggregates. Raw data plus process = credibility.", 
-        "Henderson et al. (JMLR 2020)"
-    ),
-    unsafe_allow_html=True
-)
+st.dataframe(display_df, use_container_width=True, height=350)

@@ -1,25 +1,70 @@
 """
 Reusable Plotly chart functions for the AI Emissions Dashboard.
 
-Every chart function returns a plotly.graph_objects.Figure so the caller
-can simply do `st.plotly_chart(fig, use_container_width=True)`.
+Every chart function returns a plotly.graph_objects.Figure with pure black
+typography and editorial publication aesthetics.
 """
 
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 
-from utils.theme import apply_editorial_layout
-from utils.constants import MODEL_COLORS, QUANTIZATION_COLORS, PALETTE, MODEL_ORDER, QUANT_ORDER, BATCH_SIZE_COLORS, BATCH_SIZE_ORDER, INPUT_LENGTH_COLORS, INPUT_LENGTH_ORDER, ARCHITECTURE_COLORS, ARCHITECTURE_ORDER, JEPA_MODEL_COLORS
+from utils.constants import (
+    MODEL_COLORS,
+    QUANTIZATION_COLORS,
+    PALETTE,
+    MODEL_ORDER,
+    QUANT_ORDER,
+    BATCH_SIZE_COLORS,
+    BATCH_SIZE_ORDER,
+    INPUT_LENGTH_COLORS,
+    INPUT_LENGTH_ORDER,
+)
 
 
 def _apply_layout(fig: go.Figure, title: str, xaxis: str = "", yaxis: str = "") -> go.Figure:
+    """Apply consistent editorial publication layout with pure black typography."""
     fig.update_layout(
-        title=dict(text=title, font_size=18, font_family="Fraunces, serif"),
-        xaxis_title=xaxis,
-        yaxis_title=yaxis,
+        title=dict(
+            text=title,
+            font=dict(family="Fraunces, Georgia, serif", size=18, color="#000000"),
+            x=0.01,
+            xanchor="left",
+        ),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(247,245,240,0.5)",
+        font=dict(family="Inter, -apple-system, sans-serif", color="#000000", size=12),
+        xaxis=dict(
+            title=dict(text=xaxis, font=dict(family="Inter, sans-serif", size=12, color="#000000")),
+            gridcolor="rgba(17,17,17,0.08)",
+            zerolinecolor="rgba(17,17,17,0.25)",
+            tickfont=dict(family="JetBrains Mono, monospace", size=11, color="#000000"),
+        ),
+        yaxis=dict(
+            title=dict(text=yaxis, font=dict(family="Inter, sans-serif", size=12, color="#000000")),
+            gridcolor="rgba(17,17,17,0.08)",
+            zerolinecolor="rgba(17,17,17,0.25)",
+            tickfont=dict(family="JetBrains Mono, monospace", size=11, color="#000000"),
+        ),
+        legend=dict(
+            bgcolor="rgba(255,255,255,0.85)",
+            bordercolor="rgba(17,17,17,0.15)",
+            borderwidth=1,
+            font=dict(family="Inter, sans-serif", size=11, color="#000000"),
+        ),
+        margin=dict(l=60, r=30, t=60, b=60),
+        hoverlabel=dict(
+            bgcolor="#000000",
+            font_size=12,
+            font_family="Inter, sans-serif",
+            font_color="#FFFFFF",
+        ),
     )
-    return apply_editorial_layout(fig)
+    return fig
+
+
+# ── Bar charts ────────────────────────────────────────────────────────────────
+
 def bar_energy_by_model(df: pd.DataFrame) -> go.Figure:
     """Bar chart: average energy (Wh) per response, by model."""
     summary = (
@@ -28,7 +73,7 @@ def bar_energy_by_model(df: pd.DataFrame) -> go.Figure:
         .reindex(MODEL_ORDER)
         .reset_index()
     )
-    summary["energy_wh"] = summary["energy_kwh"] * 1000  # convert to Wh for readability
+    summary["energy_wh"] = summary["energy_kwh"] * 1000
 
     fig = px.bar(
         summary,
@@ -38,12 +83,15 @@ def bar_energy_by_model(df: pd.DataFrame) -> go.Figure:
         color_discrete_map=MODEL_COLORS,
         text_auto=".3f",
     )
-    fig.update_traces(textposition="outside")
-    return _apply_layout(fig, "Average Energy per Response", "Model", "Energy (Wh)")
+    fig.update_traces(
+        textposition="outside",
+        textfont=dict(color="#000000", size=11, family="JetBrains Mono, monospace"),
+    )
+    return _apply_layout(fig, "Average Energy per Response", "Model Architecture", "Energy (Wh)")
 
 
 def bar_co2_by_model(df: pd.DataFrame) -> go.Figure:
-    """Bar chart: average CO₂ (grams) per response, by model."""
+    """Bar chart: average CO2 (grams) per response, by model."""
     summary = (
         df.groupby("model")["co2_grams"]
         .mean()
@@ -59,8 +107,11 @@ def bar_co2_by_model(df: pd.DataFrame) -> go.Figure:
         color_discrete_map=MODEL_COLORS,
         text_auto=".3f",
     )
-    fig.update_traces(textposition="outside")
-    return _apply_layout(fig, "Average CO₂ per Response", "Model", "CO₂ (grams)")
+    fig.update_traces(
+        textposition="outside",
+        textfont=dict(color="#000000", size=11, family="JetBrains Mono, monospace"),
+    )
+    return _apply_layout(fig, "Average CO2e Emissions per Response", "Model Architecture", "CO2e (grams)")
 
 
 def bar_latency_by_model(df: pd.DataFrame) -> go.Figure:
@@ -80,8 +131,11 @@ def bar_latency_by_model(df: pd.DataFrame) -> go.Figure:
         color_discrete_map=MODEL_COLORS,
         text_auto=".2f",
     )
-    fig.update_traces(textposition="outside")
-    return _apply_layout(fig, "Average Latency per Response", "Model", "Time (seconds)")
+    fig.update_traces(
+        textposition="outside",
+        textfont=dict(color="#000000", size=11, family="JetBrains Mono, monospace"),
+    )
+    return _apply_layout(fig, "Average Latency per Response", "Model Architecture", "Time (seconds)")
 
 
 # ── Scatter plots ─────────────────────────────────────────────────────────────
@@ -102,10 +156,13 @@ def scatter_params_vs_energy(df: pd.DataFrame, params_map: dict) -> go.Figure:
         size_max=30,
         text="model",
     )
-    fig.update_traces(textposition="top center", textfont_size=12)
+    fig.update_traces(
+        textposition="top center",
+        textfont=dict(color="#000000", size=12, family="Inter, sans-serif"),
+    )
     return _apply_layout(
         fig,
-        "Model Size vs Energy per Response",
+        "Active Parameters vs Energy per Response",
         "Parameters (Billions)",
         "Energy (Wh)",
     )
@@ -131,17 +188,20 @@ def bar_quantization_energy(df: pd.DataFrame) -> go.Figure:
         color_discrete_map=QUANTIZATION_COLORS,
         text_auto=".3f",
     )
-    fig.update_traces(textposition="outside")
+    fig.update_traces(
+        textposition="outside",
+        textfont=dict(color="#000000", size=11, family="JetBrains Mono, monospace"),
+    )
     return _apply_layout(
         fig,
-        "Llama-2-7B (Real): Energy by Quantization Level",
-        "Precision",
+        "Energy Consumption by Precision Regime (Llama-2-7B)",
+        "Precision Format",
         "Energy (Wh)",
     )
 
 
 def bar_quantization_co2(df: pd.DataFrame) -> go.Figure:
-    """Bar chart: CO₂ by quantization level."""
+    """Bar chart: CO2 by quantization level."""
     summary = (
         df.groupby("precision")["co2_grams"]
         .mean()
@@ -157,12 +217,15 @@ def bar_quantization_co2(df: pd.DataFrame) -> go.Figure:
         color_discrete_map=QUANTIZATION_COLORS,
         text_auto=".3f",
     )
-    fig.update_traces(textposition="outside")
+    fig.update_traces(
+        textposition="outside",
+        textfont=dict(color="#000000", size=11, family="JetBrains Mono, monospace"),
+    )
     return _apply_layout(
         fig,
-        "Llama-2-7B (Real): CO₂ by Quantization Level",
-        "Precision",
-        "CO₂ (grams)",
+        "CO2e Emissions by Precision Regime (Llama-2-7B)",
+        "Precision Format",
+        "CO2e (grams)",
     )
 
 
@@ -182,14 +245,15 @@ def line_quality_vs_precision(df: pd.DataFrame) -> go.Figure:
         mode="lines+markers+text",
         text=[f"{v:.1f}" for v in summary["quality_score"]],
         textposition="top center",
+        textfont=dict(color="#000000", size=12, family="JetBrains Mono, monospace"),
         marker=dict(size=14, color=[QUANTIZATION_COLORS[p] for p in summary["precision"]]),
-        line=dict(color="#3498db", width=3),
+        line=dict(color="#2563EB", width=3),
         name="Quality Score",
     ))
     fig = _apply_layout(
         fig,
-        "Quality vs Precision Trade-off (Llama-2-7B (Real))",
-        "Precision",
+        "Semantic Quality Retention vs Precision (Llama-2-7B)",
+        "Precision Format",
         "Quality Score (0–100)",
     )
     fig.update_yaxes(range=[70, 102])
@@ -212,7 +276,7 @@ def histogram_energy(df: pd.DataFrame) -> go.Figure:
         barmode="overlay",
         opacity=0.7,
     )
-    return _apply_layout(fig, "Energy Distribution Across Queries", "Energy (Wh)", "Count")
+    return _apply_layout(fig, "Energy Distribution Across Queries", "Energy (Wh)", "Frequency Count")
 
 
 def box_energy_by_model(df: pd.DataFrame) -> go.Figure:
@@ -228,11 +292,11 @@ def box_energy_by_model(df: pd.DataFrame) -> go.Figure:
         color_discrete_map=MODEL_COLORS,
         category_orders={"model": MODEL_ORDER},
     )
-    return _apply_layout(fig, "Energy Spread per Model", "Model", "Energy (Wh)")
+    return _apply_layout(fig, "Energy Spread per Architecture", "Model Architecture", "Energy (Wh)")
 
 
 def box_co2_by_model(df: pd.DataFrame) -> go.Figure:
-    """Box plot: CO₂ spread per model."""
+    """Box plot: CO2 spread per model."""
     fig = px.box(
         df,
         x="model",
@@ -241,56 +305,89 @@ def box_co2_by_model(df: pd.DataFrame) -> go.Figure:
         color_discrete_map=MODEL_COLORS,
         category_orders={"model": MODEL_ORDER},
     )
-    return _apply_layout(fig, "CO₂ Spread per Model", "Model", "CO₂ (grams)")
+    return _apply_layout(fig, "CO2e Spread per Architecture", "Model Architecture", "CO2e (grams)")
 
 
 def bar_batch_size_energy(df: pd.DataFrame) -> go.Figure:
     """Bar chart: energy per query at different batch sizes."""
     summary = df.groupby("batch_size")["energy_kwh"].mean().reindex(BATCH_SIZE_ORDER).reset_index()
     summary["energy_wh"] = summary["energy_kwh"] * 1000
-    fig = px.bar(summary, x="batch_size", y="energy_wh",
-                 color="batch_size", color_discrete_map={str(k): v for k, v in BATCH_SIZE_COLORS.items()},
-                 text_auto=".3f")
-    fig.update_traces(textposition="outside")
+    fig = px.bar(
+        summary,
+        x="batch_size",
+        y="energy_wh",
+        color="batch_size",
+        color_discrete_map={str(k): v for k, v in BATCH_SIZE_COLORS.items()},
+        text_auto=".3f",
+    )
+    fig.update_traces(
+        textposition="outside",
+        textfont=dict(color="#000000", size=11, family="JetBrains Mono, monospace"),
+    )
     fig.update_xaxes(type="category")
-    return _apply_layout(fig, "Energy per Query by Batch Size (Llama-2-7B (Real))", "Batch Size", "Energy (Wh)")
+    return _apply_layout(fig, "Normalized Energy per Query by Batch Size (Llama-2-7B)", "Batch Size (N)", "Energy (Wh)")
 
 
 def bar_batch_size_latency(df: pd.DataFrame) -> go.Figure:
     """Bar chart: latency per query at different batch sizes."""
     summary = df.groupby("batch_size")["duration_s"].mean().reindex(BATCH_SIZE_ORDER).reset_index()
-    fig = px.bar(summary, x="batch_size", y="duration_s",
-                 color="batch_size", color_discrete_map={str(k): v for k, v in BATCH_SIZE_COLORS.items()},
-                 text_auto=".2f")
-    fig.update_traces(textposition="outside")
+    fig = px.bar(
+        summary,
+        x="batch_size",
+        y="duration_s",
+        color="batch_size",
+        color_discrete_map={str(k): v for k, v in BATCH_SIZE_COLORS.items()},
+        text_auto=".2f",
+    )
+    fig.update_traces(
+        textposition="outside",
+        textfont=dict(color="#000000", size=11, family="JetBrains Mono, monospace"),
+    )
     fig.update_xaxes(type="category")
-    return _apply_layout(fig, "Latency per Query by Batch Size (Llama-2-7B (Real))", "Batch Size", "Time (seconds)")
+    return _apply_layout(fig, "Latency per Forward Pass by Batch Size (Llama-2-7B)", "Batch Size (N)", "Time (seconds)")
 
 
 def scatter_input_length_energy(df: pd.DataFrame) -> go.Figure:
     """Scatter: input tokens vs energy consumption."""
     df = df.copy()
     df["energy_wh"] = df["energy_kwh"] * 1000
-    fig = px.scatter(df, x="input_tokens", y="energy_wh",
-                     color="input_length_category", color_discrete_map=INPUT_LENGTH_COLORS,
-                     size="energy_wh", size_max=20,
-                     trendline="ols",
-                     category_orders={"input_length_category": INPUT_LENGTH_ORDER})
-    return _apply_layout(fig, "Input Length vs Energy (Llama-2-7B (Real))", "Input Tokens", "Energy (Wh)")
+    fig = px.scatter(
+        df,
+        x="input_tokens",
+        y="energy_wh",
+        color="input_length_category",
+        color_discrete_map=INPUT_LENGTH_COLORS,
+        size="energy_wh",
+        size_max=20,
+        trendline="ols",
+        category_orders={"input_length_category": INPUT_LENGTH_ORDER},
+    )
+    fig.update_traces(
+        textfont=dict(color="#000000", size=11, family="Inter, sans-serif"),
+    )
+    return _apply_layout(fig, "Input Prompt Length vs Total Energy (Llama-2-7B)", "Input Tokens (Prompt)", "Energy (Wh)")
 
 
 def bar_energy_per_input_token(df: pd.DataFrame) -> go.Figure:
     """Bar chart: energy per input token by input length category."""
     summary = df.groupby("input_length_category").agg(
         energy_kwh=("energy_kwh", "mean"),
-        input_tokens=("input_tokens", "mean")
+        input_tokens=("input_tokens", "mean"),
     ).reindex(INPUT_LENGTH_ORDER).reset_index()
     summary["energy_per_input_token_wh"] = (summary["energy_kwh"] / summary["input_tokens"]) * 1000
-    fig = px.bar(summary, x="input_length_category", y="energy_per_input_token_wh",
-                 color="input_length_category", color_discrete_map=INPUT_LENGTH_COLORS,
-                 text_auto=".4f")
-    fig.update_traces(textposition="outside")
-    return _apply_layout(fig, "Energy per Input Token by Length Category", "Input Length", "Energy per Token (Wh)")
+    fig = px.bar(
+        summary,
+        x="input_length_category",
+        y="energy_per_input_token_wh",
+        color="input_length_category",
+        color_discrete_map=INPUT_LENGTH_COLORS,
+        text_auto=".4f",
+    )
+    fig.update_traces(
+        textposition="outside",
+        textfont=dict(color="#000000", size=11, family="JetBrains Mono, monospace"),
+    )
+    return _apply_layout(fig, "Energy per Input Token by Length Category", "Context Window Regime", "Energy per Token (Wh)")
 
 
 def bar_energy_per_token(df: pd.DataFrame) -> go.Figure:
@@ -300,42 +397,16 @@ def bar_energy_per_token(df: pd.DataFrame) -> go.Figure:
             "energy_per_token_wh": (g["energy_kwh"].sum() / g["tokens_generated"].sum()) * 1000
         })
     ).reindex(MODEL_ORDER).reset_index()
-    fig = px.bar(summary, x="model", y="energy_per_token_wh",
-                 color="model", color_discrete_map=MODEL_COLORS,
-                 text_auto=".5f")
-    fig.update_traces(textposition="outside")
-    return _apply_layout(fig, "Energy per Output Token", "Model", "Energy per Token (Wh)")
-
-
-# ── JEPA Charts ───────────────────────────────────────────────────────────────
-
-def bar_jepa_energy_comparison(df: pd.DataFrame) -> go.Figure:
-    """Bar chart: avg energy (Joules) per model — JEPA vs Generative."""
-    summary = df.groupby("model")["energy_j"].mean().reset_index()
-    summary = summary.sort_values("energy_j", ascending=False)
-    fig = px.bar(summary, x="model", y="energy_j",
-                 color="model", color_discrete_map=JEPA_MODEL_COLORS,
-                 text_auto=".0f")
-    fig.update_traces(textposition="outside")
-    return _apply_layout(fig, "Energy per Inference: JEPA vs Generative", "Model", "Energy (Joules)")
-
-
-def line_jepa_scaling(df: pd.DataFrame) -> go.Figure:
-    """Line chart: how energy scales with model size for both architectures."""
-    summary = df.groupby(["parameters_b", "architecture"])["energy_j"].mean().reset_index()
-    fig = px.line(summary, x="parameters_b", y="energy_j",
-                  color="architecture", color_discrete_map=ARCHITECTURE_COLORS,
-                  markers=True,
-                  category_orders={"architecture": ARCHITECTURE_ORDER})
-    fig.update_traces(line=dict(width=3), marker=dict(size=10))
-    return _apply_layout(fig, "Energy Scaling: JEPA vs Generative (as model grows)", "Parameters (Billions)", "Energy (Joules)")
-
-
-def bar_jepa_co2_comparison(df: pd.DataFrame) -> go.Figure:
-    """Bar chart: CO2 by architecture type."""
-    summary = df.groupby("architecture_type")["co2_grams"].mean().reset_index()
-    fig = px.bar(summary, x="architecture_type", y="co2_grams",
-                 color="architecture_type", color_discrete_map=ARCHITECTURE_COLORS,
-                 text_auto=".4f")
-    fig.update_traces(textposition="outside")
-    return _apply_layout(fig, "Avg CO₂ Emissions: Predictive vs Generative", "Architecture", "CO₂ (grams)")
+    fig = px.bar(
+        summary,
+        x="model",
+        y="energy_per_token_wh",
+        color="model",
+        color_discrete_map=MODEL_COLORS,
+        text_auto=".5f",
+    )
+    fig.update_traces(
+        textposition="outside",
+        textfont=dict(color="#000000", size=11, family="JetBrains Mono, monospace"),
+    )
+    return _apply_layout(fig, "Energy per Output Token by Architecture", "Model Architecture", "Energy per Token (Wh)")

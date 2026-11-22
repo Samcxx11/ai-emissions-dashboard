@@ -348,25 +348,120 @@ EDITORIAL_CSS = """
     }
 
     /* ── Streamlit overrides ───────────────────────────────────────────── */
-    .stMetric label { font-family: var(--mono) !important; font-size: 12px !important; text-transform: uppercase !important; letter-spacing: 0.05em !important; }
-    .stMetric [data-testid="stMetricValue"] { font-family: var(--serif) !important; font-weight: 300 !important; }
+    .stMetric label { font-family: var(--mono) !important; font-size: 12px !important; text-transform: uppercase !important; letter-spacing: 0.05em !important; color: #000000 !important; }
+    .stMetric [data-testid="stMetricValue"] { font-family: var(--serif) !important; font-weight: 300 !important; color: #000000 !important; }
     .stTabs [data-baseweb="tab-list"] { gap: 0 !important; }
-    .stTabs [data-baseweb="tab"] { font-family: var(--mono) !important; font-size: 13px !important; text-transform: uppercase !important; letter-spacing: 0.05em !important; }
+    .stTabs [data-baseweb="tab"] { font-family: var(--mono) !important; font-size: 13px !important; text-transform: uppercase !important; letter-spacing: 0.05em !important; color: #000000 !important; }
     [data-testid="stHeader"] { background: var(--paper) !important; }
     .block-container { max-width: 1280px !important; padding-top: 2rem !important; }
+
+    /* ── 120Hz ProMotion & Ultra-Smooth Performance ────────────────────── */
+    * {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+    }
+    html, body, [data-testid="stAppViewContainer"] {
+        scroll-behavior: smooth;
+    }
+    /* Force 120fps hardware compositing */
+    .stApp, .block-container, section[data-testid="stSidebar"],
+    .metric-editorial, .compare-panel, .finding-box, .formula-box,
+    .js-plotly-plot, .stDataFrame {
+        transform: translate3d(0, 0, 0);
+        -webkit-transform: translate3d(0, 0, 0);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        will-change: transform, opacity;
+    }
+    /* Snappy 120Hz micro-interactions (8.33ms frame budget) */
+    .metric-editorial, .compare-panel, .finding-box, .formula-box,
+    button, select, input, [data-baseweb="tab"], .stSlider {
+        transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+                    box-shadow 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+                    border-color 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+                    background-color 0.12s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+    .metric-editorial:hover, .compare-panel:hover, .formula-box:hover {
+        transform: translateY(-2px) translate3d(0, 0, 0) !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+    }
+    /* Fluid inertia scrollbars */
+    ::-webkit-scrollbar {
+        width: 7px;
+        height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+        background: rgba(247,245,240,0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+        background: rgba(17,17,17,0.25);
+        border-radius: 4px;
+        transition: background 0.12s ease;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(17,17,17,0.5);
+    }
+
+    /* ── Formula Box ─────────────────────────────────────────────────────── */
+    .formula-box {
+        background: #FFFFFF;
+        border: 1px solid var(--divider);
+        border-left: 4px solid var(--ink);
+        border-radius: 4px;
+        padding: 1.5rem 1.75rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 2px 8px rgba(17,17,17,0.03);
+    }
+    .formula-box:hover {
+        border-left-color: var(--accent-green);
+    }
+    .formula-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+    .formula-title {
+        font-family: var(--mono);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #000000;
+        font-weight: 600;
+    }
+    .formula-tag {
+        font-family: var(--mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        background: var(--smoke);
+        color: var(--graphite);
+        padding: 2px 8px;
+        border-radius: 2px;
+    }
+    .formula-desc {
+        font-family: var(--sans);
+        font-size: 0.88rem;
+        color: var(--graphite);
+        line-height: 1.6;
+        margin-top: 0.75rem;
+        border-top: 1px solid var(--divider);
+        padding-top: 0.6rem;
+    }
 </style>
 """
 
 
-# ── Plotly Light Theme ────────────────────────────────────────────────────────
+# ── Plotly Light Theme (Black Text) ──────────────────────────────────────────
 PLOTLY_LIGHT_TEMPLATE = dict(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(247,245,240,0.5)",
-    font=dict(family="Inter, sans-serif", size=13, color="#444444"),
-    title=dict(font=dict(family="Fraunces, Georgia, serif", size=20, color="#111111")),
-    xaxis=dict(gridcolor="rgba(17,17,17,0.08)", linecolor="rgba(17,17,17,0.15)", tickfont=dict(size=12, color="#111111"), title_font=dict(color="#111111")),
-    yaxis=dict(gridcolor="rgba(17,17,17,0.08)", linecolor="rgba(17,17,17,0.15)", tickfont=dict(size=12, color="#111111"), title_font=dict(color="#111111")),
-    colorway=["#111111", "#057A55", "#B91C1C", "#3498db", "#f39c12", "#9b59b6"],
+    font=dict(family="Inter, sans-serif", size=13, color="#000000"),
+    title=dict(font=dict(family="Fraunces, Georgia, serif", size=20, color="#000000")),
+    xaxis=dict(gridcolor="rgba(17,17,17,0.08)", linecolor="rgba(17,17,17,0.25)", tickfont=dict(size=12, color="#000000"), title_font=dict(color="#000000")),
+    yaxis=dict(gridcolor="rgba(17,17,17,0.08)", linecolor="rgba(17,17,17,0.25)", tickfont=dict(size=12, color="#000000"), title_font=dict(color="#000000")),
+    colorway=["#000000", "#057A55", "#B91C1C", "#2563EB", "#D97706", "#4B5563"],
 )
 
 
@@ -411,6 +506,22 @@ def metric_card(value, unit, description="", color_class="", desc=""):
     """
 
 
+def formula_box(title, latex_str, description="", tag="MATHEMATICAL SPECIFICATION"):
+    """Return markdown string rendering a formula inside a styled box."""
+    desc_html = f'<div class="formula-desc">{description}</div>' if description else ""
+    return f"""<div class="formula-box">
+<div class="formula-header">
+    <span class="formula-title">{title}</span>
+    <span class="formula-tag">{tag}</span>
+</div>
+
+$${latex_str}$$
+
+{desc_html}
+</div>"""
+
+
 def big_number(num):
     """Return HTML for a decorative big background number."""
     return f'<div class="big-number">{num:02d}</div>'
+
