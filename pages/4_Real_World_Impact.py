@@ -145,14 +145,22 @@ st.markdown("Practical steps to minimize your AI footprint.")
 
 st.markdown(
     """
-    * **1. Right-Size Your Model:** If a 1B model performs almost as well as a 7B model for simple tasks, use the smaller one.
+    * **1. Right-Size Your Model:** If a 1B model performs almost as well as a 7B model for simple tasks, use the smaller one. This is the single biggest lever.
     * **2. Avoid Overkill:** Many people use large general-purpose models for tasks a small specialized model could handle.
-    * **3. Quantize When Possible:** Quantization shrinks the memory footprint drastically.
-    * **4. Cache Repeated Queries:** Zero energy for a cached response.
-    * **5. Batch Requests:** Running multiple queries together is more energy-efficient per-query.
-    * **6. Time-of-Use Awareness:** Running heavy AI workloads when the electricity grid has more renewable energy available reduces the carbon intensity per kWh.
+    * **3. Quantize When Possible:** INT8 quantization saves ~35% energy with under 2% quality loss. INT4 saves ~58%.
+    * **4. Cache Repeated Queries:** Use semantic caching for FAQs — zero energy for a cached response.
+    * **5. Batch Requests:** Running multiple queries together is more energy-efficient per-query due to better GPU utilization.
+    * **6. Time-of-Use Awareness:** Running heavy AI workloads when the grid has more renewable energy reduces the carbon intensity per kWh.
+    * **7. Smart Model Routing:** Use a lightweight classifier to route simple queries to small models, complex ones to large models. 70–80% of queries hit the cheap model.
+    * **8. Speculative Decoding:** Use a small draft model to generate candidate tokens, then verify with the large model in parallel. 2–3× speedup, identical quality.
+    * **9. Optimized Inference Engines:** Replace vanilla inference with vLLM (PagedAttention), TensorRT-LLM, or llama.cpp. Same model, same quality, 30–60% less energy.
+    * **10. Limit Output Tokens:** Set tight `max_new_tokens` limits. Generating 2,000 tokens when 200 suffice wastes 10× decode energy.
+    * **11. Low-Carbon Regions:** The same query emits 90× less CO₂ in Norway (hydro) than India (coal). Pick cloud regions powered by renewables.
+    * **12. Optimize Prompt Length:** Shorter prompts use less prefill energy. Remove unnecessary context and verbose instructions.
     """
 )
+
+st.markdown(finding("Want the full playbook? Visit the **♻️ Carbon Reduction Strategies** page in the sidebar for 22 detailed strategies with an interactive savings simulator.", "SEE ALSO"), unsafe_allow_html=True)
 
 st.markdown(divider(), unsafe_allow_html=True)
 st.markdown(chapter(6, "THE BOTTOM LINE"), unsafe_allow_html=True)
